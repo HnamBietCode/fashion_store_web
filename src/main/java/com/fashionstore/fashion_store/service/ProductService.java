@@ -4,6 +4,7 @@ import com.fashionstore.fashion_store.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +25,10 @@ public interface ProductService {
     List<Product> getLatestProducts();
 
     Product saveProduct(Product product);
+
+    Product saveProduct(Long id, String name, String slug, String description,
+            BigDecimal price, BigDecimal salePrice, String imageUrl,
+            Integer stockQuantity, Long categoryId, boolean featured, boolean active);
 
     void deleteProduct(Long id);
 }
