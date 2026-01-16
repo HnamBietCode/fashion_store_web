@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head(${product.name} + ' - Fashion Store')}"></head>
+
+<body>
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <main class="py-5">
+        <div class="container">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/products}">Sản phẩm</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/products(category=${product.category.id})}"
+                            th:text="${product.category.name}">Category</a></li>
+                    <li class="breadcrumb-item active" th:text="${product.name}">Product</li>
+                </ol>
+            </nav>
+
+            <div class="row">
+                <!-- Product Image -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <img th:src="${product.imageUrl != null ? product.imageUrl : '/images/placeholder.jpg'}"
+                            class="card-img-top" alt="Product" style="max-height: 500px; object-fit: contain;">
+                    </div>
+                </div>
+
+                <!-- Product Info -->
+                <div class="col-lg-6">
+                    <span class="badge bg-secondary mb-2" th:text="${product.category.name}">Category</span>
+                    <h2 th:text="${product.name}">Product Name</h2>
+
+                    <!-- Price -->
+                    <div class="my-3">
+                        <span th:if="${product.salePrice != null}" class="h3 text-danger fw-bold me-2"
+                            th:text="${#numbers.formatDecimal(product.salePrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                        <span th:if="${product.salePrice != null}" class="h5 text-muted text-decoration-line-through"
+                            th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                        <span th:if="${product.salePrice == null}" class="h3 text-primary fw-bold"
+                            th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                    </div>
+
+                    <!-- Stock -->
+                    <p th:if="${product.stockQuantity > 0}" class="text-success">
+                        <i class="bi bi-check-circle"></i> Còn hàng (<span th:text="${product.stockQuantity}"></span>
+                        sản phẩm)
+                    </p>
+                    <p th:if="${product.stockQuantity <= 0}" class="text-danger">
+                        <i class="bi bi-x-circle"></i> Hết hàng
+                    </p>
+
+                    <!-- Variants -->
+                    <div th:if="${!product.variants.isEmpty()}" class="mb-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Kích thước:</label>
+                            <div class="btn-group" role="group">
+                                <th:block th:each="variant : ${product.variants}">
+                                    <input type="radio" class="btn-check" th:id="${'size-' + variant.id}" name="size"
+                                        th:value="${variant.size}">
+                                    <label class="btn btn-outline-dark" th:for="${'size-' + variant.id}"
+                                        th:text="${variant.size}">S</label>
+                                </th:block>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quantity & Add to Cart -->
+                    <form th:action="@{/cart/add}" method="post" class="d-flex align-items-center gap-3 mb-4">
+                        <input type="hidden" name="productId" th:value="${product.id}">
+                        <div class="input-group" style="width: 130px;">
+                            <button type="button" class="btn btn-outline-secondary" onclick="decreaseQty()">-</button>
+                            <input type="number" id="quantity" name="quantity" class="form-control text-center"
+                                value="1" min="1">
+                            <button type="button" class="btn btn-outline-secondary" onclick="increaseQty()">+</button>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg flex-grow-1"
+                            th:disabled="${product.stockQuantity <= 0}">
+                            <i class="bi bi-cart-plus"></i> Thêm vào giỏ hàng
+                        </button>
+                    </form>
+
+                    <script>
+                        function increaseQty() {
+                            var qty = document.getElementById('quantity');
+                            qty.value = parseInt(qty.value) + 1;
+                        }
+                        function decreaseQty() {
+                            var qty = document.getElementById('quantity');
+                            if (parseInt(qty.value) > 1) qty.value = parseInt(qty.value) - 1;
+                        }
+                    </script>
+
+                    <!-- Description -->
+                    <div class="border-top pt-4">
+                        <h5>Mô tả sản phẩm</h5>
+                        <p th:text="${product.description}">Description here...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Products -->
+            <div class="mt-5" th:if="${!relatedProducts.isEmpty()}">
+                <h4 class="mb-4">Sản phẩm liên quan</h4>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-3" th:each="p : ${relatedProducts}" th:if="${p.id != product.id}">
+                        <div class="card h-100 product-card">
+                            <img th:src="${p.imageUrl != null ? p.imageUrl : '/images/placeholder.jpg'}"
+                                class="card-img-top" style="height: 180px; object-fit: cover;">
+                            <div class="card-body">
+                                <h6 th:text="${p.name}">Product</h6>
+                                <span class="text-primary fw-bold"
+                                    th:text="${#numbers.formatDecimal(p.salePrice != null ? p.salePrice : p.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                            </div>
+                            <div class="card-footer bg-white border-0">
+                                <a th:href="@{/products/{slug}(slug=${p.slug})}"
+                                    class="btn btn-outline-primary btn-sm w-100">Xem</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

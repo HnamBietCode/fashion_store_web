@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,7 +32,45 @@
                     <a th:href="@{/cart}" class="btn btn-outline-light me-2">
                         <i class="bi bi-cart3"></i> Giỏ hàng
                     </a>
-                    <a th:href="@{/login}" class="btn btn-primary">Đăng nhập</a>
+
+                    <!-- Nếu chưa đăng nhập -->
+                    <th:block sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/login}" class="btn btn-primary">Đăng nhập</a>
+                    </th:block>
+
+                    <!-- Nếu đã đăng nhập -->
+                    <th:block sec:authorize="isAuthenticated()">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button"
+                                data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i>
+                                <span sec:authentication="name">User</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" th:href="@{/profile}">
+                                        <i class="bi bi-person"></i> Tài khoản
+                                    </a></li>
+                                <li><a class="dropdown-item" th:href="@{/orders}">
+                                        <i class="bi bi-bag"></i> Đơn hàng
+                                    </a></li>
+                                <li sec:authorize="hasRole('ADMIN')">
+                                    <a class="dropdown-item text-danger" th:href="@{/admin}">
+                                        <i class="bi bi-gear"></i> Admin
+                                    </a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <form th:action="@{/logout}" method="post" class="d-inline">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </th:block>
                 </div>
             </div>
         </div>
@@ -66,4 +106,5 @@
         <p class="text-center text-muted mb-0">© 2024 Fashion Store. All rights reserved.</p>
     </div>
 </footer>
+
 </html>
