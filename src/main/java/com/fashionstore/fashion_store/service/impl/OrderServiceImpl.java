@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import com.fashionstore.fashion_store.exception.BusinessException;
+import com.fashionstore.fashion_store.exception.ResourceNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -29,12 +31,15 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order createOrder(Long userId, String shippingName, String shippingPhone,
             String shippingAddress, String note, Order.PaymentMethod paymentMethod) {
+        // COLLECTIONS: dùng List<CartItem> — interface, không dùng ArrayList cụ thể
+        // → Polymorphism: biến kiểu List có thể là ArrayList, LinkedList...
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
         List<CartItem> cartItems = cartService.getCartItems(userId);
         if (cartItems.isEmpty()) {
-            throw new RuntimeException("Giỏ hàng trống!");
+            // BusinessException thay vì RuntimeException — rõ ràng hơn, có errorCode
+            throw new BusinessException("CART_EMPTY", "Giỏ hàng trống! Vui lòng thêm sản phẩm.");
         }
 
         // Tính tổng tiền
@@ -99,7 +104,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order updateStatus(Long orderId, Order.OrderStatus status) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
         order.setStatus(status);
         return orderRepository.save(order);
     }

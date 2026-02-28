@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public interface CategoryService {
 
+    List<Category> getAllCategories();
+
     List<Category> getAllActiveCategories();
 
     Optional<Category> getCategoryById(Long id);

@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -29,7 +30,7 @@ public class UserServiceImpl implements UserService {
         User user = User.builder()
                 .fullName(fullName)
                 .email(email)
-                .password(passwordEncoder.encode(password))  // Mã hóa password
+                .password(passwordEncoder.encode(password)) // Mã hóa password
                 .role(User.Role.CUSTOMER)
                 .enabled(true)
                 .build();
@@ -50,5 +51,41 @@ public class UserServiceImpl implements UserService {
     @Override
     public User save(User user) {
         return userRepository.save(user);
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    @Override
+    public User toggleUserActive(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+        user.setEnabled(!user.getEnabled());
+        return userRepository.save(user);
+    }
+
+    @Override
+    public User updateProfile(Long userId, String fullName, String phone, String address) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+        user.setFullName(fullName);
+        user.setPhone(phone);
+        user.setAddress(address);
+        return userRepository.save(user);
+    }
+
+    @Override
+    public boolean changePassword(Long userId, String oldPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+        // Kiểm tra mật khẩu cũ có đúng không
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            return false; // Mật khẩu cũ sai
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return true;
     }
 }

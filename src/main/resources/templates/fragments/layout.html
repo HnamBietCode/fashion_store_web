@@ -29,8 +29,12 @@
                     <li class="nav-item"><a class="nav-link" th:href="@{/contact}">Liên hệ</a></li>
                 </ul>
                 <div class="d-flex align-items-center">
-                    <a th:href="@{/cart}" class="btn btn-outline-light me-2">
+                    <a th:href="@{/cart}" class="btn btn-outline-light me-2 position-relative">
                         <i class="bi bi-cart3"></i> Giỏ hàng
+                        <!-- Badge số lượng — chỉ hiện khi có sản phẩm trong giỏ -->
+                        <span th:if="${cartItemCount != null and cartItemCount > 0}"
+                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                            th:text="${cartItemCount}" style="font-size:10px;">0</span>
                     </a>
 
                     <!-- Nếu chưa đăng nhập -->

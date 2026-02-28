@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import com.fashionstore.fashion_store.exception.ResourceNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -67,13 +68,17 @@ public class ProductServiceImpl implements ProductService {
     public Product saveProduct(Long id, String name, String slug, String description,
             BigDecimal price, BigDecimal salePrice, String imageUrl,
             Integer stockQuantity, Long categoryId, boolean featured, boolean active) {
+        // COLLECTIONS: Stream API để tìm category — functional style
+        // orElseThrow là Optional method — tránh NullPointerException
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Category", categoryId));
 
         Product product;
         if (id != null) {
+            // Optional.orElseThrow() — EXCEPTION HANDLING với Optional
+            // Tránh dùng .get() vì sẽ throw NoSuchElementException không rõ nghĩa
             product = productRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Product", id));
         } else {
             product = new Product();
         }
