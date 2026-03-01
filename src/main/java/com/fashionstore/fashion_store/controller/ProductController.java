@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigDecimal;
+
 @Controller
 @RequiredArgsConstructor
 public class ProductController {
@@ -25,21 +27,34 @@ public class ProductController {
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(required = false) Long category,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(defaultValue = "newest") String sort,
             Model model) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        // Sắp xếp
+        Sort sorting = switch (sort) {
+            case "price_asc" -> Sort.by("price").ascending();
+            case "price_desc" -> Sort.by("price").descending();
+            case "name" -> Sort.by("name").ascending();
+            default -> Sort.by("createdAt").descending(); // newest
+        };
 
-        if (search != null && !search.isEmpty()) {
-            model.addAttribute("products", productService.searchProducts(search, pageable));
-            model.addAttribute("search", search);
-        } else if (category != null) {
-            model.addAttribute("products", productService.getProductsByCategory(category, pageable));
-            model.addAttribute("selectedCategory", category);
-        } else {
-            model.addAttribute("products", productService.getAllProducts(pageable));
-        }
+        Pageable pageable = PageRequest.of(page, size, sorting);
 
+        // Dùng filterProducts() duy nhất cho tất cả trường hợp
+        var products = productService.filterProducts(category, search, minPrice, maxPrice, pageable);
+
+        model.addAttribute("products", products);
         model.addAttribute("categories", categoryService.getAllActiveCategories());
+
+        // Giữ lại các filter params để hiển thị trên UI
+        model.addAttribute("selectedCategory", category);
+        model.addAttribute("search", search);
+        model.addAttribute("minPrice", minPrice);
+        model.addAttribute("maxPrice", maxPrice);
+        model.addAttribute("sort", sort);
+
         return "products/list";
     }
 

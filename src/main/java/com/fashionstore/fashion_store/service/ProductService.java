@@ -20,6 +20,9 @@ public interface ProductService {
 
     Page<Product> searchProducts(String keyword, Pageable pageable);
 
+    Page<Product> filterProducts(Long categoryId, String keyword,
+            BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
+
     List<Product> getFeaturedProducts();
 
     List<Product> getLatestProducts();

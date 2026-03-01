@@ -5,90 +5,278 @@
 
 <body>
     <div class="d-flex">
-        <div style="width: 260px;" th:replace="~{admin/fragments/layout :: sidebar}"></div>
+        <div style="width:240px;min-width:240px;" th:replace="~{admin/fragments/layout :: sidebar}"></div>
 
-        <div class="main-content flex-grow-1 p-4">
-            <h2 th:text="${product.id != null} ? 'Sửa sản phẩm' : 'Thêm sản phẩm'">Form</h2>
+        <div class="main-content flex-grow-1 p-4 bg-light" style="min-height:100vh;">
 
-            <div class="card mt-4">
-                <div class="card-body">
-                    <form th:action="@{/admin/products/save}" method="post">
-                        <input type="hidden" name="id" th:value="${product.id}">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold mb-0"
+                        th:text="${product.id != null} ? '✏️ Sửa sản phẩm' : '➕ Thêm sản phẩm mới'">Form</h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0 small">
+                            <li class="breadcrumb-item"><a th:href="@{/admin}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/admin/products}">Sản phẩm</a></li>
+                            <li class="breadcrumb-item active" th:text="${product.id != null} ? 'Sửa' : 'Thêm mới'">Form
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+                <a th:href="@{/admin/products}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Quay lại
+                </a>
+            </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Tên sản phẩm *</label>
-                                <input type="text" name="name" class="form-control" th:value="${product.name}" required>
+            <form th:action="@{/admin/products/save}" method="post" id="productForm">
+                <input type="hidden" name="id" th:value="${product.id}">
+
+                <div class="row g-4">
+
+                    <!-- LEFT COLUMN -->
+                    <div class="col-lg-8">
+
+                        <!-- Basic Info Card -->
+                        <div class="card mb-4 border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom py-3">
+                                <h6 class="mb-0 fw-bold"><i class="bi bi-info-circle text-primary me-2"></i>Thông tin cơ
+                                    bản</h6>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Slug *</label>
-                                <input type="text" name="slug" class="form-control" th:value="${product.slug}" required>
+                            <div class="card-body p-4">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Tên sản phẩm <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" name="name" id="nameInput" class="form-control form-control-lg"
+                                        th:value="${product.name}" required placeholder="VD: Áo Thun Basic Cotton"
+                                        oninput="autoSlug()">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Slug (URL) <span
+                                            class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text text-muted small">/products/</span>
+                                        <input type="text" name="slug" id="slugInput" class="form-control"
+                                            th:value="${product.slug}" required placeholder="ao-thun-basic-cotton">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="autoSlug()" title="Tự tạo từ tên">
+                                            <i class="bi bi-magic"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Chỉ dùng chữ thường, số và dấu gạch ngang. Dùng để tạo URL.
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="form-label fw-semibold">Mô tả sản phẩm</label>
+                                    <textarea name="description" class="form-control" rows="4"
+                                        placeholder="Mô tả chi tiết về chất liệu, kiểu dáng, phong cách..."
+                                        th:text="${product.description}"></textarea>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Mô tả</label>
-                            <textarea name="description" class="form-control" rows="3"
-                                th:text="${product.description}"></textarea>
+                        <!-- Pricing Card -->
+                        <div class="card mb-4 border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom py-3">
+                                <h6 class="mb-0 fw-bold"><i class="bi bi-currency-dollar text-success me-2"></i>Giá &
+                                    Tồn kho</h6>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Giá gốc (đ) <span
+                                                class="text-danger">*</span></label>
+                                        <input type="number" name="price" id="priceInput" class="form-control"
+                                            th:value="${product.price}" required min="0" step="1000" placeholder="0"
+                                            oninput="updateDiscount()">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Giá sale (đ)</label>
+                                        <input type="number" name="salePrice" id="salePriceInput" class="form-control"
+                                            th:value="${product.salePrice}" min="0" step="1000"
+                                            placeholder="Để trống nếu không sale" oninput="updateDiscount()">
+                                        <!-- Hiển thị % giảm giá realtime -->
+                                        <div id="discountBadge" class="mt-1"></div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Số lượng trong kho <span
+                                                class="text-danger">*</span></label>
+                                        <input type="number" name="stockQuantity" class="form-control"
+                                            th:value="${product.stockQuantity}" required min="0" placeholder="0">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Giá gốc *</label>
-                                <input type="number" name="price" class="form-control" th:value="${product.price}"
-                                    required>
+                        <!-- Image Card -->
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom py-3">
+                                <h6 class="mb-0 fw-bold"><i class="bi bi-image text-info me-2"></i>Hình ảnh sản phẩm
+                                </h6>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Giá sale</label>
-                                <input type="number" name="salePrice" class="form-control"
-                                    th:value="${product.salePrice}">
+                            <div class="card-body p-4">
+                                <div class="mb-2">
+                                    <label class="form-label fw-semibold">URL hình ảnh</label>
+                                    <input type="text" name="imageUrl" id="imageUrlInput" class="form-control"
+                                        th:value="${product.imageUrl}" placeholder="https://example.com/image.jpg"
+                                        oninput="previewImage()">
+                                    <div class="form-text">Dán link ảnh từ internet (Unsplash, Google...) hoặc đường dẫn
+                                        ảnh trên server.</div>
+                                </div>
+                                <!-- Image preview -->
+                                <div id="imagePreviewWrap" class="mt-3"
+                                    th:style="${product.imageUrl != null} ? 'display:block' : 'display:none'">
+                                    <p class="small text-muted mb-1">Xem trước:</p>
+                                    <img id="imagePreview" th:src="${product.imageUrl}" alt="Preview"
+                                        style="max-height:220px; max-width:100%; border-radius:10px; object-fit:cover; border:1px solid #dee2e6;"
+                                        onerror="this.parentElement.style.display='none'">
+                                </div>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Số lượng kho *</label>
-                                <input type="number" name="stockQuantity" class="form-control"
-                                    th:value="${product.stockQuantity}" required>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN -->
+                    <div class="col-lg-4">
+
+                        <!-- Publish Card -->
+                        <div class="card mb-4 border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom py-3">
+                                <h6 class="mb-0 fw-bold"><i class="bi bi-send text-primary me-2"></i>Xuất bản</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" role="switch" name="active"
+                                        value="true" id="activeSwitch"
+                                        th:checked="${product.active == null or product.active}">
+                                    <label class="form-check-label fw-semibold" for="activeSwitch">
+                                        Hiển thị sản phẩm
+                                    </label>
+                                    <div class="form-text">Bỏ chọn để ẩn khỏi cửa hàng</div>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" name="featured"
+                                        value="true" id="featuredSwitch" th:checked="${product.featured}">
+                                    <label class="form-check-label fw-semibold" for="featuredSwitch">
+                                        ⭐ Sản phẩm nổi bật
+                                    </label>
+                                    <div class="form-text">Hiển thị ở trang chủ</div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white pt-0 border-0 p-3">
+                                <button type="submit" class="btn btn-primary w-100 mb-2">
+                                    <i class="bi bi-check-lg me-1"></i>
+                                    <span
+                                        th:text="${product.id != null} ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'">Lưu</span>
+                                </button>
+                                <a th:href="@{/admin/products}" class="btn btn-outline-secondary w-100">Hủy</a>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Danh mục *</label>
+                        <!-- Category Card -->
+                        <div class="card mb-4 border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom py-3">
+                                <h6 class="mb-0 fw-bold"><i class="bi bi-tags text-warning me-2"></i>Danh mục</h6>
+                            </div>
+                            <div class="card-body p-3">
                                 <select name="categoryId" class="form-select" required>
-                                    <option value="">Chọn danh mục</option>
+                                    <option value="">-- Chọn danh mục --</option>
                                     <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"
-                                        th:selected="${product.category != null && product.category.id == cat.id}">
+                                        th:selected="${product.category != null and product.category.id == cat.id}">
                                     </option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">URL Hình ảnh</label>
-                                <input type="text" name="imageUrl" class="form-control" th:value="${product.imageUrl}">
+                        </div>
+
+                        <!-- Preview Card (khi đang sửa) -->
+                        <div class="card border-0 shadow-sm" th:if="${product.id != null}">
+                            <div class="card-header bg-white border-bottom py-3">
+                                <h6 class="mb-0 fw-bold"><i class="bi bi-eye text-secondary me-2"></i>Thông tin hiện tại
+                                </h6>
+                            </div>
+                            <div class="card-body p-3 small">
+                                <div class="d-flex justify-content-between py-1 border-bottom">
+                                    <span class="text-muted">ID</span>
+                                    <strong th:text="${product.id}">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between py-1 border-bottom">
+                                    <span class="text-muted">Ngày tạo</span>
+                                    <strong th:text="${#temporals.format(product.createdAt, 'dd/MM/yyyy')}">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between py-1">
+                                    <span class="text-muted">Trạng thái</span>
+                                    <span th:if="${product.active}" class="badge bg-success">Hiện</span>
+                                    <span th:unless="${product.active}" class="badge bg-secondary">Ẩn</span>
+                                </div>
+                                <div class="mt-3">
+                                    <a th:href="@{/products/{slug}(slug=${product.slug})}" target="_blank"
+                                        class="btn btn-outline-info w-100 btn-sm">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i>Xem trang khách hàng
+                                    </a>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <div class="form-check form-check-inline">
-                                <input type="checkbox" name="featured" class="form-check-input" value="true"
-                                    th:checked="${product.featured}">
-                                <label class="form-check-label">Nổi bật</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input type="checkbox" name="active" class="form-check-input" value="true"
-                                    th:checked="${product.active}">
-                                <label class="form-check-label">Hiển thị</label>
-                            </div>
-                        </div>
-
-                        <div class="mt-4">
-                            <button type="submit" class="btn btn-primary"><i class="bi bi-check"></i> Lưu</button>
-                            <a th:href="@{/admin/products}" class="btn btn-secondary">Quay lại</a>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Tự động tạo slug từ tên sản phẩm
+        function autoSlug() {
+            const name = document.getElementById('nameInput').value;
+            const slug = name
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')   // xóa dấu tiếng Việt
+                .replace(/đ/g, 'd')
+                .replace(/[^a-z0-9\s-]/g, '')      // chỉ giữ chữ, số, space, gạch ngang
+                .trim()
+                .replace(/\s+/g, '-')              // space → gạch ngang
+                .replace(/-+/g, '-');              // gộp nhiều gạch ngang liên tiếp
+            document.getElementById('slugInput').value = slug;
+        }
+
+        // Preview ảnh realtime khi nhập URL
+        function previewImage() {
+            const url = document.getElementById('imageUrlInput').value.trim();
+            const wrap = document.getElementById('imagePreviewWrap');
+            const img = document.getElementById('imagePreview');
+            if (url) {
+                img.src = url;
+                wrap.style.display = 'block';
+            } else {
+                wrap.style.display = 'none';
+            }
+        }
+
+        // Tính % giảm giá và hiển thị badge realtime
+        function updateDiscount() {
+            const price = parseFloat(document.getElementById('priceInput').value) || 0;
+            const sale = parseFloat(document.getElementById('salePriceInput').value) || 0;
+            const badgeDiv = document.getElementById('discountBadge');
+
+            if (sale > 0 && price > 0 && sale < price) {
+                const pct = Math.round((1 - sale / price) * 100);
+                badgeDiv.innerHTML = `<span class="badge bg-danger">Giảm ${pct}%</span>`;
+            } else if (sale >= price && sale > 0) {
+                badgeDiv.innerHTML = `<span class="badge bg-warning text-dark">⚠️ Giá sale phải nhỏ hơn giá gốc</span>`;
+            } else {
+                badgeDiv.innerHTML = '';
+            }
+        }
+
+        // Chạy khi tải trang (nếu đang edit có sẵn data)
+        document.addEventListener('DOMContentLoaded', function () {
+            updateDiscount();
+            // Nếu đang có imageUrl thì show preview
+            const existingUrl = document.getElementById('imageUrlInput').value;
+            if (existingUrl) previewImage();
+        });
+    </script>
 </body>
 
 </html>

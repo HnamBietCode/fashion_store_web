@@ -50,6 +50,14 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public Page<Product> filterProducts(Long categoryId, String keyword,
+            BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
+        // Chuẩn hóa keyword: nếu rỗng thì null để repository bỏ qua điều kiện
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        return productRepository.filterProducts(categoryId, kw, minPrice, maxPrice, pageable);
+    }
+
+    @Override
     public List<Product> getFeaturedProducts() {
         return productRepository.findByFeaturedTrueAndActiveTrue();
     }

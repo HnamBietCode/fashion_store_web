@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,16 +17,32 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findBySlug(String slug);
 
-    // Tìm sản phẩm theo category
     Page<Product> findByCategoryIdAndActiveTrue(Long categoryId, Pageable pageable);
 
-    // Sản phẩm nổi bật
     List<Product> findByFeaturedTrueAndActiveTrue();
 
-    // Tìm kiếm theo tên (không phân biệt hoa thường)
     @Query("SELECT p FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) AND p.active = true")
     Page<Product> searchByName(@Param("keyword") String keyword, Pageable pageable);
 
-    // Sản phẩm mới nhất
     List<Product> findTop8ByActiveTrueOrderByCreatedAtDesc();
+
+    /**
+     * FILTER kết hợp: category + price range + keyword search
+     * Tất cả params đều optional (null = bỏ qua điều kiện)
+     * COALESCE(salePrice, price) → dùng giá sale nếu có, không thì dùng giá gốc
+     */
+    @Query("""
+            SELECT p FROM Product p
+            WHERE p.active = true
+              AND (:categoryId IS NULL OR p.category.id = :categoryId)
+              AND (:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+              AND (:minPrice IS NULL OR COALESCE(p.salePrice, p.price) >= :minPrice)
+              AND (:maxPrice IS NULL OR COALESCE(p.salePrice, p.price) <= :maxPrice)
+            """)
+    Page<Product> filterProducts(
+            @Param("categoryId") Long categoryId,
+            @Param("keyword") String keyword,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            Pageable pageable);
 }
