@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('Đặt hàng thành công - Fashion Store')}"></head>
+
+<style>
+    .success-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        animation: pop .5s ease;
+    }
+
+    @keyframes pop {
+        0% {
+            transform: scale(0);
+            opacity: 0;
+        }
+
+        80% {
+            transform: scale(1.15);
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
+
+<body>
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <main class="py-5 bg-light">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-7">
+                    <div class="card border-0 shadow-sm text-center p-5">
+                        <div class="success-icon">
+                            <i class="bi bi-check-lg text-white" style="font-size:2.5rem;"></i>
+                        </div>
+
+                        <h3 class="fw-bold mb-2">Đặt hàng thành công! 🎉</h3>
+                        <p class="text-muted mb-1">Cảm ơn bạn đã mua sắm tại Fashion Store</p>
+
+                        <div th:if="${orderNumber}" class="alert alert-success mt-3">
+                            <div class="fw-semibold">Mã đơn hàng của bạn:</div>
+                            <div class="fs-4 fw-bold" th:text="${orderNumber}">FS-XXXX</div>
+                            <small>Lưu mã này để tra cứu đơn hàng của bạn</small>
+                        </div>
+
+                        <div th:if="${orderTotal}" class="mb-3">
+                            <span class="text-muted">Tổng thanh toán: </span>
+                            <span class="fw-bold text-danger fs-5"
+                                th:text="${#numbers.formatDecimal(orderTotal, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                        </div>
+
+                        <p class="text-muted small mb-4">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Chúng tôi sẽ xác nhận đơn hàng trong vòng 1-2 giờ làm việc.
+                            Theo dõi đơn hàng trong trang "Đơn hàng của tôi".
+                        </p>
+
+                        <div class="d-flex gap-2 justify-content-center flex-wrap">
+                            <a th:href="@{/orders}" class="btn btn-primary">
+                                <i class="bi bi-bag me-1"></i>Xem đơn hàng của tôi
+                            </a>
+                            <a th:href="@{/products}" class="btn btn-outline-secondary">
+                                <i class="bi bi-shop me-1"></i>Tiếp tục mua sắm
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

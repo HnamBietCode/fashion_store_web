@@ -18,8 +18,24 @@
                 </a>
             </div>
 
-            <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
-            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+            <div th:if="${message}" class="alert alert-success alert-dismissible fade show">
+                <i class="bi bi-check-circle me-2"></i><span th:text="${message}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" th:text="${error}"></div>
+
+            <!-- Search bar -->
+            <div class="card mb-3 border-0 shadow-sm">
+                <div class="card-body py-2">
+                    <form th:action="@{/admin/products}" method="get" class="d-flex gap-2">
+                        <input type="search" name="q" class="form-control" style="max-width:320px;" th:value="${q}"
+                            placeholder="🔍 Tìm theo tên sản phẩm...">
+                        <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+                        <a th:if="${q != null and !#strings.isEmpty(q)}" th:href="@{/admin/products}"
+                            class="btn btn-outline-secondary">Xóa bộ lọc</a>
+                    </form>
+                </div>
+            </div>
 
             <div class="card">
                 <div class="table-responsive">

@@ -15,34 +15,38 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    Optional<Product> findBySlug(String slug);
+        Optional<Product> findBySlug(String slug);
 
-    Page<Product> findByCategoryIdAndActiveTrue(Long categoryId, Pageable pageable);
+        Page<Product> findByCategoryIdAndActiveTrue(Long categoryId, Pageable pageable);
 
-    List<Product> findByFeaturedTrueAndActiveTrue();
+        List<Product> findByFeaturedTrueAndActiveTrue();
 
-    @Query("SELECT p FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) AND p.active = true")
-    Page<Product> searchByName(@Param("keyword") String keyword, Pageable pageable);
+        @Query("SELECT p FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) AND p.active = true")
+        Page<Product> searchByName(@Param("keyword") String keyword, Pageable pageable);
 
-    List<Product> findTop8ByActiveTrueOrderByCreatedAtDesc();
+        List<Product> findTop8ByActiveTrueOrderByCreatedAtDesc();
 
-    /**
-     * FILTER kết hợp: category + price range + keyword search
-     * Tất cả params đều optional (null = bỏ qua điều kiện)
-     * COALESCE(salePrice, price) → dùng giá sale nếu có, không thì dùng giá gốc
-     */
-    @Query("""
-            SELECT p FROM Product p
-            WHERE p.active = true
-              AND (:categoryId IS NULL OR p.category.id = :categoryId)
-              AND (:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
-              AND (:minPrice IS NULL OR COALESCE(p.salePrice, p.price) >= :minPrice)
-              AND (:maxPrice IS NULL OR COALESCE(p.salePrice, p.price) <= :maxPrice)
-            """)
-    Page<Product> filterProducts(
-            @Param("categoryId") Long categoryId,
-            @Param("keyword") String keyword,
-            @Param("minPrice") BigDecimal minPrice,
-            @Param("maxPrice") BigDecimal maxPrice,
-            Pageable pageable);
+        // Tìm kiếm nhanh cho autocomplete navbar
+        List<Product> findByNameContainingIgnoreCaseAndActiveTrue(String name,
+                        org.springframework.data.domain.Pageable pageable);
+
+        /**
+         * FILTER kết hợp: category + price range + keyword search
+         * Tất cả params đều optional (null = bỏ qua điều kiện)
+         * COALESCE(salePrice, price) → dùng giá sale nếu có, không thì dùng giá gốc
+         */
+        @Query("""
+                        SELECT p FROM Product p
+                        WHERE p.active = true
+                          AND (:categoryId IS NULL OR p.category.id = :categoryId)
+                          AND (:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                          AND (:minPrice IS NULL OR COALESCE(p.salePrice, p.price) >= :minPrice)
+                          AND (:maxPrice IS NULL OR COALESCE(p.salePrice, p.price) <= :maxPrice)
+                        """)
+        Page<Product> filterProducts(
+                        @Param("categoryId") Long categoryId,
+                        @Param("keyword") String keyword,
+                        @Param("minPrice") BigDecimal minPrice,
+                        @Param("maxPrice") BigDecimal maxPrice,
+                        Pageable pageable);
 }

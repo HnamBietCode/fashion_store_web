@@ -7,7 +7,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 @RequestMapping("/admin")
@@ -27,8 +31,8 @@ public class AdminDashboardController {
         model.addAttribute("totalUsers", userRepository.count());
 
         // Tổng doanh thu từ các đơn đã giao
-        BigDecimal totalRevenue = orderRepository.findByStatus(Order.OrderStatus.DELIVERED)
-                .stream()
+        List<Order> deliveredOrders = orderRepository.findByStatus(Order.OrderStatus.DELIVERED);
+        BigDecimal totalRevenue = deliveredOrders.stream()
                 .map(Order::getTotalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         model.addAttribute("totalRevenue", totalRevenue);
@@ -42,6 +46,36 @@ public class AdminDashboardController {
                 .stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .limit(10).toList());
+
+        // ===== Dữ liệu biểu đồ doanh thu 12 tháng gần nhất =====
+        // Group đơn đã giao theo tháng
+        LocalDateTime now = LocalDateTime.now();
+        List<String> chartLabels = new ArrayList<>();
+        List<BigDecimal> chartData = new ArrayList<>();
+
+        List<Order> allDelivered = orderRepository.findByStatus(Order.OrderStatus.DELIVERED);
+
+        for (int i = 11; i >= 0; i--) {
+            LocalDateTime monthStart = now.minusMonths(i).withDayOfMonth(1)
+                    .withHour(0).withMinute(0).withSecond(0);
+            LocalDateTime monthEnd = monthStart.plusMonths(1);
+
+            // Label: "Th1/2025", "Th2/2025" ...
+            chartLabels.add("Th" + monthStart.getMonthValue() + "/" + monthStart.getYear());
+
+            BigDecimal monthRevenue = allDelivered.stream()
+                    .filter(o -> {
+                        LocalDateTime t = o.getCreatedAt();
+                        return t != null && !t.isBefore(monthStart) && t.isBefore(monthEnd);
+                    })
+                    .map(Order::getTotalAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            chartData.add(monthRevenue);
+        }
+
+        model.addAttribute("chartLabels", chartLabels);
+        model.addAttribute("chartData", chartData);
+
         return "admin/dashboard";
     }
 }

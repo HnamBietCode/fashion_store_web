@@ -28,6 +28,21 @@
                     <li class="nav-item"><a class="nav-link" th:href="@{/about}">Giới thiệu</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/contact}">Liên hệ</a></li>
                 </ul>
+
+                <!-- Search Bar -->
+                <div class="position-relative me-3" style="min-width:260px;">
+                    <div class="input-group">
+                        <input type="text" id="navSearch" class="form-control form-control-sm"
+                            placeholder="🔍 Tìm sản phẩm..." autocomplete="off">
+                        <a id="navSearchBtn" th:href="@{/products}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-search"></i>
+                        </a>
+                    </div>
+                    <!-- Autocomplete dropdown -->
+                    <div id="searchDropdown" class="position-absolute bg-white border rounded-3 shadow-lg w-100"
+                        style="top:calc(100% + 4px);left:0;z-index:9999;display:none;max-height:340px;overflow-y:auto;">
+                    </div>
+                </div>
                 <div class="d-flex align-items-center">
                     <a th:href="@{/cart}" class="btn btn-outline-light me-2 position-relative">
                         <i class="bi bi-cart3"></i> Giỏ hàng
@@ -56,6 +71,9 @@
                                     </a></li>
                                 <li><a class="dropdown-item" th:href="@{/orders}">
                                         <i class="bi bi-bag"></i> Đơn hàng
+                                    </a></li>
+                                <li><a class="dropdown-item" th:href="@{/wishlist}">
+                                        <i class="bi bi-heart text-danger"></i> Yêu thích
                                     </a></li>
                                 <li sec:authorize="hasRole('ADMIN')">
                                     <a class="dropdown-item text-danger" th:href="@{/admin}">
@@ -110,5 +128,184 @@
         <p class="text-center text-muted mb-0">© 2024 Fashion Store. All rights reserved.</p>
     </div>
 </footer>
+
+<!-- Navbar Search JS -->
+<script>
+    (function () {
+        const inp = document.getElementById('navSearch');
+        const box = document.getElementById('searchDropdown');
+        const btn = document.getElementById('navSearchBtn');
+        if (!inp) return;
+
+        let timer;
+        inp.addEventListener('input', () => {
+            clearTimeout(timer);
+            const q = inp.value.trim();
+            if (!q) { box.style.display = 'none'; return; }
+
+            // Update search button href
+            btn.href = '/products?keyword=' + encodeURIComponent(q);
+
+            timer = setTimeout(() => {
+                fetch('/api/products/search?q=' + encodeURIComponent(q))
+                    .then(r => r.json())
+                    .then(items => {
+                        if (!items.length) { box.style.display = 'none'; return; }
+                        box.innerHTML = items.map(p => `
+                        <a href="/products/${p.slug}" class="d-flex align-items-center gap-2 p-2 text-decoration-none text-dark border-bottom" style="hover:background:#f8f9fa;">
+                            <img src="${p.image || 'https://placehold.co/40x40?text=SP'}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
+                            <div>
+                                <div class="fw-semibold small">${p.name}</div>
+                                <div class="text-danger small">${p.price.toLocaleString('vi-VN')}đ</div>
+                            </div>
+                        </a>`).join('');
+                        box.innerHTML += `<a href="/products?keyword=${encodeURIComponent(q)}" class="d-block text-center p-2 small text-primary">Xem tất cả kết quả →</a>`;
+                        box.style.display = 'block';
+                    })
+                    .catch(() => { box.style.display = 'none'; });
+            }, 300);
+        });
+
+        inp.addEventListener('keydown', e => {
+            if (e.key === 'Enter') window.location.href = '/products?keyword=' + encodeURIComponent(inp.value.trim());
+        });
+
+        document.addEventListener('click', e => {
+            if (!inp.contains(e.target) && !box.contains(e.target)) box.style.display = 'none';
+        });
+    })();
+</script>
+<!-- Global Toast container (góc dưới phải) -->
+<div id="toastContainer"
+    style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;"></div>
+
+<!-- Global UX JS: Toast + AJAX Cart + Image Zoom + Recently Viewed -->
+<script>
+    // ===== TOAST NOTIFICATIONS =====
+    function showToast(message, type = 'success', duration = 3000) {
+        const colors = { success: '#28a745', error: '#dc3545', warning: '#ffc107', info: '#17a2b8' };
+        const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+        background:${colors[type] || colors.success};color:#fff;padding:12px 18px;
+        border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.2);font-size:14px;font-weight:500;
+        max-width:300px;display:flex;align-items:center;gap:8px;cursor:pointer;
+        animation:slideIn .3s ease;opacity:1;transition:opacity .3s;
+    `;
+        toast.innerHTML = `${icons[type] || '✅'} ${message}`;
+        toast.onclick = () => removeToast(toast);
+        document.getElementById('toastContainer').appendChild(toast);
+        setTimeout(() => removeToast(toast), duration);
+    }
+    function removeToast(el) {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+    }
+
+    // ===== AJAX ADD TO CART (không reload trang) =====
+    document.addEventListener('DOMContentLoaded', () => {
+        // Intercept all add-to-cart forms (action="/cart/add")
+        document.querySelectorAll('form[action="/cart/add"]').forEach(form => {
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+                const data = new FormData(form);
+                const params = new URLSearchParams();
+                data.forEach((v, k) => params.append(k, v));
+
+                // CSRF
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || '';
+                const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+                headers[csrfHeader] = csrfToken;
+
+                fetch('/api/cart/add', { method: 'POST', headers, body: params.toString() })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            showToast(res.message, 'success');
+                            // Cập nhật badge số lượng giỏ hàng
+                            const badge = document.getElementById('cartBadge');
+                            if (badge && res.cartCount !== undefined) {
+                                badge.textContent = res.cartCount;
+                                badge.style.display = res.cartCount > 0 ? 'inline' : 'none';
+                                // Bounce animation
+                                badge.style.transform = 'scale(1.4)';
+                                setTimeout(() => badge.style.transform = 'scale(1)', 200);
+                            }
+                        } else {
+                            showToast(res.message || 'Có lỗi xảy ra!', 'error');
+                        }
+                    })
+                    .catch(() => showToast('Lỗi kết nối!', 'error'));
+            });
+        });
+
+        // ===== RECENTLY VIEWED (localStorage) =====
+        const rvContainer = document.getElementById('recentlyViewed');
+        if (rvContainer) {
+            const rv = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+            // Đọc sản phẩm hiện tại từ data attribute của page
+            const cur = document.getElementById('currentProduct');
+            if (cur) {
+                const product = { id: cur.dataset.id, name: cur.dataset.name, slug: cur.dataset.slug, image: cur.dataset.image, price: cur.dataset.price };
+                const filtered = rv.filter(p => p.id !== product.id);
+                filtered.unshift(product);
+                localStorage.setItem('recentlyViewed', JSON.stringify(filtered.slice(0, 6)));
+            }
+            // Render
+            const list = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+            if (list.length > 1) {
+                rvContainer.innerHTML = list.slice(1, 5).map(p => `
+                <div class="col-6 col-md-3">
+                    <a href="/products/${p.slug}" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm h-100" style="transition:transform .2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
+                            <img src="${p.image || 'https://placehold.co/160x160?text=SP'}"
+                                 alt="${p.name}" style="height:130px;object-fit:cover;border-radius:8px 8px 0 0;">
+                            <div class="card-body p-2">
+                                <div class="small fw-semibold text-dark text-truncate">${p.name}</div>
+                                <div class="small text-danger">${Number(p.price).toLocaleString('vi-VN')}đ</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>`).join('');
+            } else {
+                rvContainer.closest('.recently-viewed-section')?.remove();
+            }
+        }
+
+        // Flash messages as toasts
+        document.querySelectorAll('.flash-toast').forEach(el => {
+            showToast(el.dataset.message, el.dataset.type || 'success');
+            el.remove();
+        });
+    });
+</script>
+<style>
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    /* Image zoom on product cards */
+    .product-img-zoom {
+        overflow: hidden;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .product-img-zoom img {
+        transition: transform .35s ease;
+    }
+
+    .product-img-zoom img:hover {
+        transform: scale(1.08);
+    }
+</style>
 
 </html>

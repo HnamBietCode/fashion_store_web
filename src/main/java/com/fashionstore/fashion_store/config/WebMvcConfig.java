@@ -29,5 +29,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
         // Cấu hình thư mục static resources
         registry.addResourceHandler("/static/**")
                 .addResourceLocations("classpath:/static/");
+
+        // Serve ảnh upload từ filesystem — dùng path tuyệt đối để nhận file mới khi
+        // runtime
+        String uploadPath = System.getProperty("user.dir") + "/src/main/resources/static/uploads/";
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:///" + uploadPath.replace("\\", "/"));
     }
 }

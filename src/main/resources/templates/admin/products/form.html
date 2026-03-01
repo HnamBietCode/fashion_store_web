@@ -28,7 +28,7 @@
                 </a>
             </div>
 
-            <form th:action="@{/admin/products/save}" method="post" id="productForm">
+            <form th:action="@{/admin/products/save}" method="post" enctype="multipart/form-data" id="productForm">
                 <input type="hidden" name="id" th:value="${product.id}">
 
                 <div class="row g-4">
@@ -116,20 +116,44 @@
                                 </h6>
                             </div>
                             <div class="card-body p-4">
-                                <div class="mb-2">
-                                    <label class="form-label fw-semibold">URL hình ảnh</label>
+                                <!-- Tabs: URL vs Upload -->
+                                <ul class="nav nav-tabs mb-3" id="imageTabs">
+                                    <li class="nav-item">
+                                        <button class="nav-link active" id="tab-url" type="button"
+                                            onclick="switchTab('url')">
+                                            <i class="bi bi-link-45deg me-1"></i>Dán URL ảnh
+                                        </button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link" id="tab-file" type="button"
+                                            onclick="switchTab('file')">
+                                            <i class="bi bi-upload me-1"></i>Tải ảnh lên
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <!-- URL input -->
+                                <div id="pane-url">
                                     <input type="text" name="imageUrl" id="imageUrlInput" class="form-control"
                                         th:value="${product.imageUrl}" placeholder="https://example.com/image.jpg"
-                                        oninput="previewImage()">
-                                    <div class="form-text">Dán link ảnh từ internet (Unsplash, Google...) hoặc đường dẫn
-                                        ảnh trên server.</div>
+                                        oninput="previewFromUrl()">
+                                    <div class="form-text">Dán link ảnh từ internet</div>
                                 </div>
-                                <!-- Image preview -->
+
+                                <!-- File upload -->
+                                <div id="pane-file" style="display:none;">
+                                    <input type="file" name="imageFile" id="imageFileInput" class="form-control"
+                                        accept="image/*" onchange="previewFromFile(event)">
+                                    <div class="form-text">JPG, PNG, WEBP &mdash; Tối đa 5MB</div>
+                                </div>
+
+                                <!-- Preview -->
                                 <div id="imagePreviewWrap" class="mt-3"
                                     th:style="${product.imageUrl != null} ? 'display:block' : 'display:none'">
                                     <p class="small text-muted mb-1">Xem trước:</p>
-                                    <img id="imagePreview" th:src="${product.imageUrl}" alt="Preview"
-                                        style="max-height:220px; max-width:100%; border-radius:10px; object-fit:cover; border:1px solid #dee2e6;"
+                                    <img id="imagePreview" th:src="${product.imageUrl != null ? product.imageUrl : ''}"
+                                        alt="Preview"
+                                        style="max-height:220px;max-width:100%;border-radius:10px;object-fit:cover;border:1px solid #dee2e6;"
                                         onerror="this.parentElement.style.display='none'">
                                 </div>
                             </div>
@@ -241,17 +265,36 @@
         }
 
         // Preview ảnh realtime khi nhập URL
-        function previewImage() {
+        function previewFromUrl() {
             const url = document.getElementById('imageUrlInput').value.trim();
             const wrap = document.getElementById('imagePreviewWrap');
             const img = document.getElementById('imagePreview');
-            if (url) {
-                img.src = url;
-                wrap.style.display = 'block';
-            } else {
-                wrap.style.display = 'none';
-            }
+            if (url) { img.src = url; wrap.style.display = 'block'; }
+            else { wrap.style.display = 'none'; }
         }
+
+        // Preview ảnh khi chọn file
+        function previewFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const wrap = document.getElementById('imagePreviewWrap');
+            const img = document.getElementById('imagePreview');
+            const reader = new FileReader();
+            reader.onload = e => { img.src = e.target.result; wrap.style.display = 'block'; };
+            reader.readAsDataURL(file);
+        }
+
+        // Chuyển tab URL / File
+        function switchTab(tab) {
+            document.getElementById('pane-url').style.display = tab === 'url' ? 'block' : 'none';
+            document.getElementById('pane-file').style.display = tab === 'file' ? 'block' : 'none';
+            document.getElementById('tab-url').classList.toggle('active', tab === 'url');
+            document.getElementById('tab-file').classList.toggle('active', tab === 'file');
+            // Clear the other input
+            if (tab === 'file') document.getElementById('imageUrlInput').value = '';
+            else document.getElementById('imageFileInput').value = '';
+        }
+
 
         // Tính % giảm giá và hiển thị badge realtime
         function updateDiscount() {

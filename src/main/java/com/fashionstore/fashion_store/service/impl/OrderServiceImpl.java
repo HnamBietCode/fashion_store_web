@@ -87,6 +87,58 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public Order createOrder(Long userId, String shippingName, String shippingPhone,
+            String shippingAddress, String note, Order.PaymentMethod paymentMethod,
+            BigDecimal discountAmount) {
+        // Delegate to main method, then apply discount to saved order total
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        List<CartItem> cartItems = cartService.getCartItems(userId);
+        if (cartItems.isEmpty()) {
+            throw new BusinessException("CART_EMPTY", "Giỏ hàng trống! Vui lòng thêm sản phẩm.");
+        }
+
+        BigDecimal totalAmount = cartService.getCartTotal(userId);
+        BigDecimal discount = discountAmount != null ? discountAmount : BigDecimal.ZERO;
+        BigDecimal finalTotal = totalAmount.subtract(discount).max(BigDecimal.ZERO);
+
+        Order order = Order.builder()
+                .orderNumber(generateOrderNumber())
+                .user(user)
+                .totalAmount(finalTotal)
+                .status(Order.OrderStatus.PENDING)
+                .shippingName(shippingName)
+                .shippingPhone(shippingPhone)
+                .shippingAddress(shippingAddress)
+                .note(note)
+                .paymentMethod(paymentMethod)
+                .items(new ArrayList<>())
+                .build();
+
+        for (CartItem cartItem : cartItems) {
+            Product product = cartItem.getProduct();
+            BigDecimal price = product.getSalePrice() != null ? product.getSalePrice() : product.getPrice();
+
+            OrderItem orderItem = OrderItem.builder()
+                    .order(order)
+                    .product(product)
+                    .productName(product.getName())
+                    .price(price)
+                    .quantity(cartItem.getQuantity())
+                    .size(cartItem.getVariant() != null ? cartItem.getVariant().getSize() : null)
+                    .color(cartItem.getVariant() != null ? cartItem.getVariant().getColor() : null)
+                    .build();
+
+            order.getItems().add(orderItem);
+        }
+
+        Order savedOrder = orderRepository.save(order);
+        cartService.clearCart(userId);
+        return savedOrder;
+    }
+
+    @Override
     public List<Order> getOrdersByUser(Long userId) {
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }

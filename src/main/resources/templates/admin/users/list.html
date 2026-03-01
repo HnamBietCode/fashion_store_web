@@ -5,66 +5,120 @@
 
 <body>
     <div class="d-flex">
-        <div style="width: 260px;" th:replace="~{admin/fragments/layout :: sidebar}"></div>
+        <div style="width:240px;min-width:240px;" th:replace="~{admin/fragments/layout :: sidebar}"></div>
 
-        <div class="main-content flex-grow-1 p-4">
+        <div class="main-content flex-grow-1 p-4 bg-light" style="min-height:100vh;">
+
+            <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="bi bi-people me-2"></i>Quản lý Người dùng</h2>
-                <span class="badge bg-secondary fs-6" th:text="${#lists.size(users)} + ' người dùng'">0</span>
+                <div>
+                    <h4 class="fw-bold mb-0">👥 Quản lý Người dùng</h4>
+                    <p class="text-muted mb-0 small" th:text="${#lists.size(users)} + ' tài khoản trong hệ thống'">0</p>
+                </div>
             </div>
 
-            <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
-            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+            <!-- Alerts -->
+            <div th:if="${message}" class="alert alert-success alert-dismissible fade show">
+                <i class="bi bi-check-circle me-2"></i><span th:text="${message}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
 
-            <div class="card shadow-sm">
+            <!-- Stats row -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm text-center p-3">
+                        <div class="fw-bold fs-4 text-primary" th:text="${#lists.size(users)}">0</div>
+                        <div class="small text-muted">Tổng tài khoản</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm text-center p-3">
+                        <div class="fw-bold fs-4 text-success" th:text="${#lists.size(users.?[enabled == true])}">0
+                        </div>
+                        <div class="small text-muted">Đang hoạt động</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm text-center p-3">
+                        <div class="fw-bold fs-4 text-secondary" th:text="${#lists.size(users.?[enabled == false])}">0
+                        </div>
+                        <div class="small text-muted">Bị khóa</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm text-center p-3">
+                        <div class="fw-bold fs-4 text-danger" th:text="${#lists.size(users.?[role.name() == 'ADMIN'])}">
+                            0</div>
+                        <div class="small text-muted">Admin</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="card border-0 shadow-sm">
                 <div class="card-body p-0">
-                    <table class="table table-hover mb-0 align-middle">
+                    <table class="table table-hover align-middle mb-0">
                         <thead class="table-dark">
                             <tr>
-                                <th>#</th>
-                                <th>Họ tên</th>
+                                <th style="width:50px;">#</th>
+                                <th>Người dùng</th>
                                 <th>Email</th>
                                 <th>Điện thoại</th>
                                 <th>Vai trò</th>
                                 <th>Trạng thái</th>
                                 <th>Ngày tạo</th>
-                                <th>Thao tác</th>
+                                <th style="width:120px;">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr th:if="${#lists.isEmpty(users)}">
-                                <td colspan="8" class="text-center py-4 text-muted">Chưa có người dùng nào.</td>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <i class="bi bi-people display-4 d-block mb-2"></i>Chưa có người dùng nào.
+                                </td>
                             </tr>
                             <tr th:each="u : ${users}">
-                                <td th:text="${u.id}">1</td>
+                                <td class="text-muted small" th:text="${u.id}">1</td>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
-                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-                                            style="width:36px;height:36px;font-size:14px;font-weight:600;"
-                                            th:text="${#strings.substring(u.fullName,0,1).toUpperCase()}">A</div>
-                                        <span th:text="${u.fullName}">Tên</span>
+                                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                                            style="width:38px;height:38px;font-size:14px;"
+                                            th:style="${u.role.name() == 'ADMIN'} ? 'background:#dc3545;' : 'background:#0d6efd;'"
+                                            th:text="${#strings.substring(u.fullName, 0, 1).toUpperCase()}">A</div>
+                                        <div>
+                                            <div class="fw-semibold" th:text="${u.fullName}">Tên</div>
+                                            <small class="text-muted" th:if="${u.address != null}"
+                                                th:text="${#strings.abbreviate(u.address, 30)}">Address</small>
+                                        </div>
                                     </div>
                                 </td>
                                 <td th:text="${u.email}">email@example.com</td>
                                 <td th:text="${u.phone != null ? u.phone : '-'}">-</td>
                                 <td>
-                                    <span th:if="${u.role.name() == 'ADMIN'}" class="badge bg-danger">ADMIN</span>
-                                    <span th:unless="${u.role.name() == 'ADMIN'}"
-                                        class="badge bg-info text-dark">CUSTOMER</span>
+                                    <span th:if="${u.role.name() == 'ADMIN'}" class="badge bg-danger">🔑 Admin</span>
+                                    <span th:unless="${u.role.name() == 'ADMIN'}" class="badge bg-info text-dark">👤
+                                        Khách hàng</span>
                                 </td>
                                 <td>
-                                    <span th:if="${u.enabled}" class="badge bg-success">Hoạt động</span>
-                                    <span th:unless="${u.enabled}" class="badge bg-secondary">Bị khóa</span>
+                                    <span th:if="${u.enabled}" class="badge bg-success">● Hoạt động</span>
+                                    <span th:unless="${u.enabled}" class="badge bg-secondary">○ Bị khóa</span>
                                 </td>
-                                <td th:text="${#temporals.format(u.createdAt, 'dd/MM/yyyy')}">01/01/2024</td>
+                                <td class="small text-muted" th:text="${#temporals.format(u.createdAt, 'dd/MM/yyyy')}">
+                                    01/01/2024</td>
                                 <td>
+                                    <!-- Không cho khóa chính mình -->
                                     <form th:action="@{/admin/users/{id}/toggle(id=${u.id})}" method="post"
-                                        class="d-inline">
+                                        th:unless="${u.role.name() == 'ADMIN'}">
                                         <button type="submit"
                                             th:class="${u.enabled} ? 'btn btn-sm btn-outline-warning' : 'btn btn-sm btn-outline-success'"
-                                            th:text="${u.enabled} ? 'Khóa' : 'Mở khóa'">
+                                            th:text="${u.enabled} ? '🔒 Khóa' : '🔓 Mở khóa'"
+                                            th:onclick="${u.enabled} ? 'return confirm(\'Khóa tài khoản ' + u.fullName + '?\')' : 'return true'">
                                         </button>
                                     </form>
+                                    <span th:if="${u.role.name() == 'ADMIN'}" class="text-muted small">Admin</span>
                                 </td>
                             </tr>
                         </tbody>

@@ -2,12 +2,14 @@ package com.fashionstore.fashion_store.controller.admin;
 
 import com.fashionstore.fashion_store.entity.Product;
 import com.fashionstore.fashion_store.service.CategoryService;
+import com.fashionstore.fashion_store.service.FileUploadService;
 import com.fashionstore.fashion_store.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -19,10 +21,21 @@ public class AdminProductController {
 
     private final ProductService productService;
     private final CategoryService categoryService;
+    private final FileUploadService fileUploadService;
 
     @GetMapping
-    public String listProducts(@RequestParam(defaultValue = "0") int page, Model model) {
-        model.addAttribute("products", productService.getAllProducts(PageRequest.of(page, 10)));
+    public String listProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String q,
+            Model model) {
+        if (q != null && !q.isBlank()) {
+            model.addAttribute("products",
+                    productService.searchProducts(q, PageRequest.of(page, 10)));
+        } else {
+            model.addAttribute("products",
+                    productService.getAllProducts(PageRequest.of(page, 10)));
+        }
+        model.addAttribute("q", q);
         model.addAttribute("categories", categoryService.getAllActiveCategories());
         return "admin/products/list";
     }
@@ -34,13 +47,19 @@ public class AdminProductController {
         return "admin/products/form";
     }
 
+    /**
+     * Lưu sản phẩm — hỗ trợ cả upload file và URL ảnh
+     * Form phải có enctype="multipart/form-data"
+     */
     @PostMapping("/save")
-    public String saveProduct(@RequestParam String name,
+    public String saveProduct(
+            @RequestParam String name,
             @RequestParam String slug,
-            @RequestParam String description,
+            @RequestParam(required = false) String description,
             @RequestParam BigDecimal price,
             @RequestParam(required = false) BigDecimal salePrice,
-            @RequestParam String imageUrl,
+            @RequestParam(required = false) String imageUrl,
+            @RequestParam(required = false) MultipartFile imageFile,
             @RequestParam Integer stockQuantity,
             @RequestParam Long categoryId,
             @RequestParam(defaultValue = "false") boolean featured,
@@ -48,8 +67,14 @@ public class AdminProductController {
             @RequestParam(required = false) Long id,
             RedirectAttributes redirectAttributes) {
         try {
+            // Ưu tiên file upload; nếu không có thì dùng URL
+            String finalImageUrl = imageUrl;
+            if (imageFile != null && !imageFile.isEmpty()) {
+                finalImageUrl = fileUploadService.saveFile(imageFile);
+            }
+
             productService.saveProduct(id, name, slug, description, price, salePrice,
-                    imageUrl, stockQuantity, categoryId, featured, active);
+                    finalImageUrl, stockQuantity, categoryId, featured, active);
             redirectAttributes.addFlashAttribute("message", "Lưu sản phẩm thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
@@ -59,9 +84,7 @@ public class AdminProductController {
 
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable Long id, Model model) {
-        productService.getProductById(id).ifPresent(product -> {
-            model.addAttribute("product", product);
-        });
+        productService.getProductById(id).ifPresent(p -> model.addAttribute("product", p));
         model.addAttribute("categories", categoryService.getAllActiveCategories());
         return "admin/products/form";
     }

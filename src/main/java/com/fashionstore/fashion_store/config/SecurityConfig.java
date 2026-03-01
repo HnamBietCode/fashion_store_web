@@ -42,27 +42,30 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authenticationProvider(authenticationProvider())
+                .csrf(csrf -> csrf
+                        // Exempt REST API endpoints từ CSRF — AJAX calls dùng JSON không gửi form CSRF
+                        // token
+                        .ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(auth -> auth
                         // Public pages - ai cũng truy cập được
                         .requestMatchers("/", "/products/**", "/categories/**").permitAll()
-                        .requestMatchers("/register", "/login", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/register", "/login", "/css/**", "/js/**", "/images/**", "/uploads/**")
+                        .permitAll()
+                        .requestMatchers("/api/products/**").permitAll() // search API
                         // Admin pages - chỉ ADMIN
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         // Các trang khác - phải đăng nhập
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/", true)
                         .failureUrl("/login?error=true")
-                        .permitAll()
-                )
+                        .permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")
-                        .permitAll()
-                );
+                        .permitAll());
 
         return http.build();
     }
