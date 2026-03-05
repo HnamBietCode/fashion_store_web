@@ -74,6 +74,7 @@ public class Order {
     public enum PaymentMethod {
         COD, // Thanh toán khi nhận hàng
         BANK_TRANSFER, // Chuyển khoản
-        VNPAY // VNPay
+        PAYPAL, // Thanh toán qua PayPal Sandbox
+        VNPAY // (Legacy) Chỉ dùng để mapping các đơn hàng cũ trong DB, không hiện trên UI
     }
 }

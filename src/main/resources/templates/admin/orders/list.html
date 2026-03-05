@@ -62,8 +62,7 @@
                                     0đ</td>
                                 <td>
                                     <span
-                                        th:text="${order.paymentMethod.name() == 'COD'} ? 'COD' :
-                                                   (${order.paymentMethod.name() == 'BANK_TRANSFER'} ? 'Chuyển khoản' : 'VNPay')">COD</span>
+                                        th:text="${order.paymentMethod.name() == 'COD'} ? 'COD' : 'Chuyển khoản'">COD</span>
                                 </td>
                                 <td>
                                     <span class="badge"

@@ -203,8 +203,7 @@
                                 <div>
                                     <div class="small text-muted">Thanh toán</div>
                                     <span class="badge bg-info text-dark"
-                                        th:text="${order.paymentMethod == 'COD'} ? '💵 Tiền mặt (COD)' :
-                                               (${order.paymentMethod == 'BANK_TRANSFER'} ? '🏦 Chuyển khoản' : '💳 VNPay')">COD</span>
+                                        th:text="${order.paymentMethod == 'COD'} ? '💵 Tiền mặt (COD)' : '🏦 Chuyển khoản'">COD</span>
                                 </div>
                             </div>
                         </div>

@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.util.Optional;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 @RequiredArgsConstructor
@@ -46,6 +49,7 @@ public class OrderController {
 
     @PostMapping("/checkout")
     public String placeOrder(@AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request,
             @RequestParam String shippingName,
             @RequestParam String shippingPhone,
             @RequestParam String shippingAddress,
@@ -68,17 +72,23 @@ public class OrderController {
                 }
             }
 
+            Order.PaymentMethod method = Order.PaymentMethod.valueOf(paymentMethod);
+
             Order order = orderService.createOrder(
                     user.getId(),
                     shippingName,
                     shippingPhone,
                     shippingAddress,
                     note,
-                    Order.PaymentMethod.valueOf(paymentMethod),
+                    method,
                     discountAmount);
 
-            // Gửi email xác nhận (async — không block)
+            // Thanh toán COD / BANK_TRANSFER: xử lý như cũ
             emailService.sendOrderConfirmation(order);
+
+            if (Order.PaymentMethod.PAYPAL.equals(method)) {
+                return "redirect:/paypal-checkout?orderNumber=" + order.getOrderNumber();
+            }
 
             redirectAttributes.addFlashAttribute("orderNumber", order.getOrderNumber());
             redirectAttributes.addFlashAttribute("orderTotal", order.getTotalAmount());

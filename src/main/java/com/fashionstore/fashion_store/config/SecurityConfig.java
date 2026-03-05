@@ -43,8 +43,7 @@ public class SecurityConfig {
         http
                 .authenticationProvider(authenticationProvider())
                 .csrf(csrf -> csrf
-                        // Exempt REST API endpoints từ CSRF — AJAX calls dùng JSON không gửi form CSRF
-                        // token
+                        // Miễn CSRF cho REST API
                         .ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(auth -> auth
                         // Public pages - ai cũng truy cập được
@@ -52,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/register", "/login", "/css/**", "/js/**", "/images/**", "/uploads/**")
                         .permitAll()
                         .requestMatchers("/api/products/**").permitAll() // search API
+                        .requestMatchers("/paypal/success", "/paypal/cancel").permitAll() // PayPal endpoints
                         // Admin pages - chỉ ADMIN
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         // Các trang khác - phải đăng nhập

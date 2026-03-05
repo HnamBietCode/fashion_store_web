@@ -140,9 +140,7 @@
                                     th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">
                                     0đ</td>
                                 <td>
-                                    <span
-                                        th:text="${order.paymentMethod == 'COD'} ? 'COD' :
-                                               (${order.paymentMethod == 'BANK_TRANSFER'} ? 'Chuyển khoản' : 'VNPay')">COD</span>
+                                    <span th:text="${order.paymentMethod == 'COD'} ? 'COD' : 'Chuyển khoản'">COD</span>
                                 </td>
                                 <td>
                                     <span class="badge"

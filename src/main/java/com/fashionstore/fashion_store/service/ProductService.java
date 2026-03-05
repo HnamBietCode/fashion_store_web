@@ -10,28 +10,28 @@ import java.util.Optional;
 
 public interface ProductService {
 
-    Page<Product> getAllProducts(Pageable pageable);
+        Page<Product> getAllProducts(Pageable pageable);
 
-    Optional<Product> getProductById(Long id);
+        Optional<Product> getProductById(Long id);
 
-    Optional<Product> getProductBySlug(String slug);
+        Optional<Product> getProductBySlug(String slug);
 
-    Page<Product> getProductsByCategory(Long categoryId, Pageable pageable);
+        Page<Product> getProductsByCategory(Long categoryId, Pageable pageable);
 
-    Page<Product> searchProducts(String keyword, Pageable pageable);
+        Page<Product> searchProducts(String keyword, Pageable pageable);
 
-    Page<Product> filterProducts(Long categoryId, String keyword,
-            BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
+        Page<Product> filterProducts(Long categoryId, String keyword,
+                        BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
 
-    List<Product> getFeaturedProducts();
+        List<Product> getFeaturedProducts();
 
-    List<Product> getLatestProducts();
+        List<Product> getLatestProducts();
 
-    Product saveProduct(Product product);
+        Product saveProduct(Product product);
 
-    Product saveProduct(Long id, String name, String slug, String description,
-            BigDecimal price, BigDecimal salePrice, String imageUrl,
-            Integer stockQuantity, Long categoryId, boolean featured, boolean active);
+        Product saveProduct(Long id, String name, String slug, String description,
+                        BigDecimal price, BigDecimal salePrice, String imageUrl,
+                        Integer stockQuantity, Long categoryId, boolean featured, boolean active);
 
-    void deleteProduct(Long id);
+        void deleteProduct(Long id);
 }

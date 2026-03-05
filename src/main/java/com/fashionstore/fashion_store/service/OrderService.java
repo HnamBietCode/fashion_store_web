@@ -7,20 +7,20 @@ import java.util.Optional;
 
 public interface OrderService {
 
-    Order createOrder(Long userId, String shippingName, String shippingPhone,
-            String shippingAddress, String note, Order.PaymentMethod paymentMethod);
+        Order createOrder(Long userId, String shippingName, String shippingPhone,
+                        String shippingAddress, String note, Order.PaymentMethod paymentMethod);
 
-    Order createOrder(Long userId, String shippingName, String shippingPhone,
-            String shippingAddress, String note, Order.PaymentMethod paymentMethod,
-            java.math.BigDecimal discountAmount);
+        Order createOrder(Long userId, String shippingName, String shippingPhone,
+                        String shippingAddress, String note, Order.PaymentMethod paymentMethod,
+                        java.math.BigDecimal discountAmount);
 
-    List<Order> getOrdersByUser(Long userId);
+        List<Order> getOrdersByUser(Long userId);
 
-    Optional<Order> getOrderById(Long orderId);
+        Optional<Order> getOrderById(Long orderId);
 
-    Optional<Order> getOrderByNumber(String orderNumber);
+        Optional<Order> getOrderByNumber(String orderNumber);
 
-    Order updateStatus(Long orderId, Order.OrderStatus status);
+        Order updateStatus(Long orderId, Order.OrderStatus status);
 
-    List<Order> getAllOrders();
+        List<Order> getAllOrders();
 }
