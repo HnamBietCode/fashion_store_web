@@ -34,6 +34,16 @@
                     </span>
                 </div>
 
+                <!-- Unpaid Alert -->
+                <div th:if="${order.status.name() == 'PENDING'}"
+                    class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+                    <div>
+                        <strong>Đơn hàng chưa được thanh toán!</strong><br>
+                        Vui lòng thanh toán để chúng tôi tiến hành chuẩn bị hàng cho bạn.
+                    </div>
+                </div>
+
                 <!-- Sản phẩm -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white py-3">
@@ -58,6 +68,18 @@
                                     th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ
                                 </div>
                             </div>
+                        </div>
+                        <!-- Subtotal -->
+                        <div class="d-flex justify-content-between p-3 bg-light border-bottom">
+                            <span>Tạm tính</span>
+                            <span class="fw-semibold"
+                                th:text="${#numbers.formatDecimal(order.totalAmount - order.shippingFee, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                        </div>
+                        <!-- Shipping fee -->
+                        <div class="d-flex justify-content-between p-3 bg-light border-bottom">
+                            <span>Phí giao hàng</span>
+                            <span class="text-success fw-semibold"
+                                th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
                         </div>
                         <!-- Total -->
                         <div class="d-flex justify-content-between p-3 bg-light fw-bold fs-5">
@@ -103,10 +125,17 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="mt-4 d-flex gap-2">
+                <div class="mt-4 d-flex gap-2 flex-wrap">
                     <a th:href="@{/orders}" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-left me-1"></i>Danh sách đơn hàng
                     </a>
+
+                    <a th:if="${order.status.name() == 'PENDING'}"
+                        th:href="@{/paypal-checkout(orderNumber=${order.orderNumber})}"
+                        class="btn btn-warning fw-semibold">
+                        <i class="bi bi-paypal me-1"></i>Thanh toán bằng PayPal ngay
+                    </a>
+
                     <a th:href="@{/products}" class="btn btn-primary">
                         <i class="bi bi-shop me-1"></i>Tiếp tục mua sắm
                     </a>

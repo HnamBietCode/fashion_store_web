@@ -40,12 +40,38 @@
                                         placeholder="0901234567" th:value="${user.phone}">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label fw-semibold">Địa chỉ giao hàng <span
+                                    <label class="form-label fw-semibold">Tỉnh / Thành phố <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" name="shippingAddress" class="form-control" required
-                                        placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành"
-                                        th:value="${user.address}">
+                                    <select class="form-select" id="provinceId" required onchange="onProvinceChange()">
+                                        <option value="">-- Chọn Tỉnh / Thành phố --</option>
+                                    </select>
+                                    <input type="hidden" id="provinceName">
                                 </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Quận / Huyện <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" id="districtId" required onchange="onDistrictChange()"
+                                        disabled>
+                                        <option value="">-- Chọn Quận / Huyện --</option>
+                                    </select>
+                                    <input type="hidden" id="districtName">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Phường / Xã <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" id="wardId" required onchange="onWardChange()" disabled>
+                                        <option value="">-- Chọn Phường / Xã --</option>
+                                    </select>
+                                    <input type="hidden" id="wardName">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Số nhà, Tên đường <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" id="streetAddress" class="form-control" required
+                                        placeholder="VD: Số 123, đường ABC..." th:value="${user.address}">
+                                </div>
+                                <!-- Ẩn: Sẽ được JS gộp lại khi submit -->
+                                <input type="hidden" name="shippingAddress" id="fullAddress">
                                 <div>
                                     <label class="form-label fw-semibold">Ghi chú (tùy chọn)</label>
                                     <textarea name="note" class="form-control" rows="2"
@@ -171,13 +197,13 @@
                             </div>
                             <div class="d-flex justify-content-between text-muted mb-3">
                                 <span>Phí giao hàng</span>
-                                <span class="text-success fw-semibold">Miễn phí</span>
+                                <span class="text-success fw-semibold" id="shippingFeeText">Đang tính...</span>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
                                 <span>Tổng cộng</span>
-                                <span class="text-danger"
-                                    th:text="${#numbers.formatDecimal(cartTotal, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                                <span class="text-danger" id="finalTotalText">
+                                    0đ</span>
                             </div>
 
                             <!-- Submit desktop -->
@@ -241,6 +267,7 @@
                         document.getElementById('couponCode').value = '';
                         feedback.innerHTML = `<span class="text-danger">❌ ${data.message}</span>`;
                     }
+                    updateFinalTotal();
                 })
                 .catch(() => {
                     feedback.innerHTML = '<span class="text-danger">Lỗi kết nối, thử lại sau.</span>';
@@ -250,6 +277,143 @@
         // Apply coupon on Enter key
         document.getElementById('couponInput').addEventListener('keydown', e => {
             if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); }
+        });
+
+        // ================= XỬ LÝ ĐỊA CHỈ & PHÍ SHIP =================
+        let shippingFee = 30000;
+        const cartTotalBase = parseFloat('[[${cartTotal}]]') || 0;
+        let provincesData = [];
+
+        // Load data on start
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch('https://provinces.open-api.vn/api/?depth=3')
+                .then(r => r.json())
+                .then(data => {
+                    provincesData = data;
+                    renderProvinces();
+                    updateFinalTotal(); // Initial update
+                });
+        });
+
+        function renderProvinces() {
+            const select = document.getElementById('provinceId');
+            provincesData.forEach(p => {
+                select.options.add(new Option(p.name, p.code));
+            });
+        }
+
+        function onProvinceChange() {
+            const code = document.getElementById('provinceId').value;
+            const distSelect = document.getElementById('districtId');
+            const wardSelect = document.getElementById('wardId');
+            distSelect.innerHTML = '<option value="">-- Chọn Quận / Huyện --</option>';
+            wardSelect.innerHTML = '<option value="">-- Chọn Phường / Xã --</option>';
+            wardSelect.disabled = true;
+
+            const nameInput = document.getElementById('provinceName');
+
+            if (!code) {
+                distSelect.disabled = true;
+                shippingFee = 30000;
+                nameInput.value = "";
+                updateFinalTotal();
+                return;
+            }
+
+            const province = provincesData.find(p => p.code == code);
+            if (province) {
+                nameInput.value = province.name;
+                const lowerName = province.name.toLowerCase();
+                // Check if HN or HCM
+                if (lowerName.includes('hà nội') || lowerName.includes('hồ chí minh')) {
+                    shippingFee = 20000;
+                } else {
+                    shippingFee = 30000;
+                }
+                updateFinalTotal();
+
+                // populate districts
+                province.districts.forEach(d => {
+                    distSelect.options.add(new Option(d.name, d.code));
+                });
+                distSelect.disabled = false;
+            }
+        }
+
+        function onDistrictChange() {
+            const pCode = document.getElementById('provinceId').value;
+            const dCode = document.getElementById('districtId').value;
+            const wardSelect = document.getElementById('wardId');
+            wardSelect.innerHTML = '<option value="">-- Chọn Phường / Xã --</option>';
+
+            const nameInput = document.getElementById('districtName');
+
+            if (!dCode) {
+                wardSelect.disabled = true;
+                nameInput.value = "";
+                return;
+            }
+
+            const province = provincesData.find(p => p.code == pCode);
+            const district = province.districts.find(d => d.code == dCode);
+            if (district) {
+                nameInput.value = district.name;
+                district.wards.forEach(w => {
+                    wardSelect.options.add(new Option(w.name, w.code));
+                });
+                wardSelect.disabled = false;
+            }
+        }
+
+        function onWardChange() {
+            const pCode = document.getElementById('provinceId').value;
+            const dCode = document.getElementById('districtId').value;
+            const wCode = document.getElementById('wardId').value;
+            const nameInput = document.getElementById('wardName');
+
+            if (!wCode) {
+                nameInput.value = "";
+                return;
+            }
+
+            const province = provincesData.find(p => p.code == pCode);
+            const district = province.districts.find(d => d.code == dCode);
+            const ward = district.wards.find(w => w.code == wCode);
+            if (ward) {
+                nameInput.value = ward.name;
+            }
+        }
+
+        function updateFinalTotal() {
+            // Update UI for shipping fee
+            const feeStr = shippingFee.toLocaleString('vi-VN') + 'đ';
+            document.getElementById('shippingFeeText').textContent = feeStr;
+
+            // Final Total (Wait for appliedDiscount to be updated in applyCoupon if any)
+            let finalAmt = cartTotalBase + shippingFee - appliedDiscount;
+            if (finalAmt < 0) finalAmt = 0;
+
+            document.getElementById('finalTotalText').textContent = finalAmt.toLocaleString('vi-VN') + 'đ';
+        }
+
+        // Must override applyCoupon callback to also updateFinalTotal
+        const originalFetchThen = window.applyCoupon;
+
+        // Intercept form submit to combine address
+        document.getElementById('checkoutForm').addEventListener('submit', function (e) {
+            const street = document.getElementById('streetAddress').value.trim();
+            const wName = document.getElementById('wardName').value;
+            const dName = document.getElementById('districtName').value;
+            const pName = document.getElementById('provinceName').value;
+
+            if (!pName || !dName || !wName || !street) {
+                alert("Vui lòng chọn đầy đủ địa chỉ giao hàng!");
+                e.preventDefault();
+                return;
+            }
+
+            const fullAddress = `${street}, ${wName}, ${dName}, ${pName}`;
+            document.getElementById('fullAddress').value = fullAddress;
         });
     </script>
 </body>

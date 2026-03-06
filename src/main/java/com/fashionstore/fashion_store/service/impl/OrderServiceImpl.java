@@ -2,6 +2,8 @@ package com.fashionstore.fashion_store.service.impl;
 
 import com.fashionstore.fashion_store.entity.*;
 import com.fashionstore.fashion_store.repository.OrderRepository;
+import com.fashionstore.fashion_store.repository.ProductRepository;
+import com.fashionstore.fashion_store.repository.ProductVariantRepository;
 import com.fashionstore.fashion_store.repository.UserRepository;
 import com.fashionstore.fashion_store.service.CartService;
 import com.fashionstore.fashion_store.service.OrderService;
@@ -27,6 +29,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final CartService cartService;
+    private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
 
     @Override
     public Order createOrder(Long userId, String shippingName, String shippingPhone,
@@ -45,12 +49,22 @@ public class OrderServiceImpl implements OrderService {
         // Tính tổng tiền
         BigDecimal totalAmount = cartService.getCartTotal(userId);
 
+        // Tính phí Vận chuyển
+        BigDecimal shippingFee = new BigDecimal("30000"); // Mặc định 30k
+        String lowerAddress = shippingAddress != null ? shippingAddress.toLowerCase() : "";
+        if (lowerAddress.contains("hà nội") || lowerAddress.contains("hồ chí minh")) {
+            shippingFee = new BigDecimal("20000");
+        }
+
+        // Cộng phí ship vào tổng thanh toán đơn hàng
+        totalAmount = totalAmount.add(shippingFee);
+
         // Tạo order
         Order order = Order.builder()
                 .orderNumber(generateOrderNumber())
                 .user(user)
                 .totalAmount(totalAmount)
-                .status(Order.OrderStatus.PENDING)
+                .shippingFee(shippingFee)
                 .shippingName(shippingName)
                 .shippingPhone(shippingPhone)
                 .shippingAddress(shippingAddress)
@@ -58,6 +72,9 @@ public class OrderServiceImpl implements OrderService {
                 .paymentMethod(paymentMethod)
                 .items(new ArrayList<>())
                 .build();
+
+        // Check stock and set status
+        processStockAndStatus(order, cartItems, paymentMethod == Order.PaymentMethod.PAYPAL);
 
         // Tạo order items từ cart
         for (CartItem cartItem : cartItems) {
@@ -100,14 +117,24 @@ public class OrderServiceImpl implements OrderService {
         }
 
         BigDecimal totalAmount = cartService.getCartTotal(userId);
+
+        // Tính phí Vận chuyển
+        BigDecimal shippingFee = new BigDecimal("30000"); // Mặc định 30k
+        String lowerAddress = shippingAddress != null ? shippingAddress.toLowerCase() : "";
+        if (lowerAddress.contains("hà nội") || lowerAddress.contains("hồ chí minh")) {
+            shippingFee = new BigDecimal("20000");
+        }
+
         BigDecimal discount = discountAmount != null ? discountAmount : BigDecimal.ZERO;
-        BigDecimal finalTotal = totalAmount.subtract(discount).max(BigDecimal.ZERO);
+
+        // Final Total = (Tổng giỏ hàng + Phí Ship) - Số tiền giảm giá
+        BigDecimal finalTotal = totalAmount.add(shippingFee).subtract(discount).max(BigDecimal.ZERO);
 
         Order order = Order.builder()
                 .orderNumber(generateOrderNumber())
                 .user(user)
+                .shippingFee(shippingFee)
                 .totalAmount(finalTotal)
-                .status(Order.OrderStatus.PENDING)
                 .shippingName(shippingName)
                 .shippingPhone(shippingPhone)
                 .shippingAddress(shippingAddress)
@@ -115,6 +142,9 @@ public class OrderServiceImpl implements OrderService {
                 .paymentMethod(paymentMethod)
                 .items(new ArrayList<>())
                 .build();
+
+        // Check stock and set status
+        processStockAndStatus(order, cartItems, paymentMethod == Order.PaymentMethod.PAYPAL);
 
         for (CartItem cartItem : cartItems) {
             Product product = cartItem.getProduct();
@@ -162,6 +192,71 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public Order updatePaymentMethod(Long orderId, Order.PaymentMethod paymentMethod) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
+        order.setPaymentMethod(paymentMethod);
+        return orderRepository.save(order);
+    }
+
+    @Override
+    public Order confirmPayPalOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
+
+        if (order.getStatus() != Order.OrderStatus.PENDING) {
+            return order;
+        }
+
+        boolean allInStock = true;
+        for (OrderItem item : order.getItems()) {
+            Product product = item.getProduct();
+            if (item.getSize() != null || item.getColor() != null) {
+                ProductVariant matchedVariant = product.getVariants().stream()
+                        .filter(v -> (v.getSize() != null ? v.getSize().equals(item.getSize()) : item.getSize() == null)
+                                &&
+                                (v.getColor() != null ? v.getColor().equals(item.getColor()) : item.getColor() == null))
+                        .findFirst().orElse(null);
+                if (matchedVariant != null && matchedVariant.getQuantity() < item.getQuantity()) {
+                    allInStock = false;
+                    break;
+                }
+            } else {
+                if (product.getStockQuantity() < item.getQuantity()) {
+                    allInStock = false;
+                    break;
+                }
+            }
+        }
+
+        if (allInStock) {
+            order.setStatus(Order.OrderStatus.SHIPPING);
+            for (OrderItem item : order.getItems()) {
+                Product product = item.getProduct();
+                if (item.getSize() != null || item.getColor() != null) {
+                    ProductVariant matchedVariant = product.getVariants().stream()
+                            .filter(v -> (v.getSize() != null ? v.getSize().equals(item.getSize())
+                                    : item.getSize() == null) &&
+                                    (v.getColor() != null ? v.getColor().equals(item.getColor())
+                                            : item.getColor() == null))
+                            .findFirst().orElse(null);
+                    if (matchedVariant != null) {
+                        matchedVariant.setQuantity(matchedVariant.getQuantity() - item.getQuantity());
+                        productVariantRepository.save(matchedVariant);
+                    }
+                } else {
+                    product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
+                    productRepository.save(product);
+                }
+            }
+        } else {
+            order.setStatus(Order.OrderStatus.CONFIRMED);
+        }
+
+        return orderRepository.save(order);
+    }
+
+    @Override
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
@@ -170,5 +265,40 @@ public class OrderServiceImpl implements OrderService {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));
         String random = String.format("%04d", new Random().nextInt(10000));
         return "FS" + timestamp + random;
+    }
+
+    private void processStockAndStatus(Order order, List<CartItem> cartItems, boolean isPayPal) {
+        order.setStatus(Order.OrderStatus.PENDING); // Default
+
+        boolean allInStock = true;
+        for (CartItem item : cartItems) {
+            if (item.getVariant() != null) {
+                if (item.getVariant().getQuantity() < item.getQuantity()) {
+                    allInStock = false;
+                    break;
+                }
+            } else {
+                if (item.getProduct().getStockQuantity() < item.getQuantity()) {
+                    allInStock = false;
+                    break;
+                }
+            }
+        }
+
+        if (allInStock && !isPayPal) {
+            order.setStatus(Order.OrderStatus.SHIPPING);
+            // Deduct stock
+            for (CartItem item : cartItems) {
+                if (item.getVariant() != null) {
+                    ProductVariant variant = item.getVariant();
+                    variant.setQuantity(variant.getQuantity() - item.getQuantity());
+                    productVariantRepository.save(variant);
+                } else {
+                    Product product = item.getProduct();
+                    product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
+                    productRepository.save(product);
+                }
+            }
+        }
     }
 }

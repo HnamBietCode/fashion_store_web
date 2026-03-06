@@ -41,6 +41,9 @@
                                         (${order.status.name() == 'SHIPPING'}  ? '🚚 Đang giao'   :
                                         (${order.status.name() == 'DELIVERED'} ? '🏠 Đã giao'     : '❌ Đã hủy')))">
                                 </span>
+                                <!-- Unpaid Badge -->
+                                <span th:if="${order.status.name() == 'PENDING'}" class="badge bg-danger fs-6 ms-2">Chưa
+                                    thanh toán</span>
                             </div>
                         </div>
 
@@ -66,10 +69,17 @@
                                 <span class="fw-bold text-danger"
                                     th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
                             </div>
-                            <a th:href="@{/orders/{num}(num=${order.orderNumber})}"
-                                class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-eye me-1"></i>Xem chi tiết
-                            </a>
+                            <div class="d-flex gap-2">
+                                <a th:if="${order.status.name() == 'PENDING'}"
+                                    th:href="@{/paypal-checkout(orderNumber=${order.orderNumber})}"
+                                    class="btn btn-sm btn-warning fw-semibold">
+                                    <i class="bi bi-paypal me-1"></i>Thanh toán Paypal
+                                </a>
+                                <a th:href="@{/orders/{num}(num=${order.orderNumber})}"
+                                    class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye me-1"></i>Xem chi tiết
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

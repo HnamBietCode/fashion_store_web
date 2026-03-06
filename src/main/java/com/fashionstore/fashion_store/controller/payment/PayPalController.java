@@ -1,6 +1,7 @@
 package com.fashionstore.fashion_store.controller.payment;
 
 import com.fashionstore.fashion_store.entity.Order;
+import com.fashionstore.fashion_store.service.ExchangeRateService;
 import com.fashionstore.fashion_store.service.OrderService;
 import com.fashionstore.fashion_store.service.PayPalService;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +24,7 @@ public class PayPalController {
 
     private final OrderService orderService;
     private final PayPalService payPalService;
-
-    private static final BigDecimal EXCHANGE_RATE = new BigDecimal("24000");
+    private final ExchangeRateService exchangeRateService;
 
     @GetMapping("/paypal-checkout")
     public String showPaypalCheckout(@RequestParam String orderNumber,
@@ -40,7 +40,12 @@ public class PayPalController {
         }
 
         Order order = orderOpt.get();
-        BigDecimal totalUsd = order.getTotalAmount().divide(EXCHANGE_RATE, 2, RoundingMode.HALF_UP);
+        // Cập nhật phương thức thanh toán thành PAYPAL nếu trước đó là COD hay
+        // BANK_TRANSFER
+        orderService.updatePaymentMethod(order.getId(), Order.PaymentMethod.PAYPAL);
+
+        BigDecimal exchangeRate = exchangeRateService.getUsdToVndRate();
+        BigDecimal totalUsd = order.getTotalAmount().divide(exchangeRate, 2, RoundingMode.HALF_UP);
 
         try {
             String approveUrl = payPalService.createOrderRequest(totalUsd.toString(), order.getOrderNumber());
@@ -48,7 +53,7 @@ public class PayPalController {
         } catch (Exception e) {
             log.error("Error redirecting to PayPal checkout", e);
             redirectAttributes.addFlashAttribute("error", "Lỗi khởi tạo thanh toán PayPal.");
-            return "redirect:/cart";
+            return "redirect:/orders";
         }
     }
 
@@ -62,7 +67,7 @@ public class PayPalController {
         if (captured) {
             orderService.getOrderByNumber(orderNumber).ifPresent(order -> {
                 if (order.getStatus() == Order.OrderStatus.PENDING) {
-                    orderService.updateStatus(order.getId(), Order.OrderStatus.CONFIRMED);
+                    orderService.confirmPayPalOrder(order.getId());
                 }
             });
             redirectAttributes.addFlashAttribute("orderNumber", orderNumber);
@@ -70,13 +75,14 @@ public class PayPalController {
             return "redirect:/order-success";
         } else {
             redirectAttributes.addFlashAttribute("error", "Thanh toán PayPal không thành công (Hủy hoặc lỗi duyệt).");
-            return "redirect:/cart";
+            return "redirect:/orders";
         }
     }
 
     @GetMapping("/paypal/cancel")
     public String paypalCancel(RedirectAttributes redirectAttributes) {
-        redirectAttributes.addFlashAttribute("error", "Bạn đã hủy quá trình thanh toán PayPal.");
-        return "redirect:/cart";
+        redirectAttributes.addFlashAttribute("error",
+                "Bạn đã hủy quá trình thanh toán PayPal. Đơn hàng vẫn được lưu lại để thanh toán sau.");
+        return "redirect:/orders";
     }
 }

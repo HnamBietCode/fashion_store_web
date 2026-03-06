@@ -37,10 +37,15 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private OrderStatus status = OrderStatus.PENDING;
 
     @Column(nullable = false)
     private String shippingName;
+
+    @Column(nullable = false, precision = 15, scale = 0)
+    @Builder.Default
+    private BigDecimal shippingFee = BigDecimal.ZERO;
 
     @Column(nullable = false)
     private String shippingPhone;
@@ -52,6 +57,7 @@ public class Order {
     private String note;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private PaymentMethod paymentMethod = PaymentMethod.COD;
 
     @CreationTimestamp
@@ -61,6 +67,7 @@ public class Order {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
     public enum OrderStatus {

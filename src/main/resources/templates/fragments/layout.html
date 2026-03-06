@@ -6,152 +6,271 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${title}">Fashion Store</title>
+
+    <!-- Lấy Font Awesome (theo Yody) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Lấy Toastify CSS (theo Yody) -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <!-- Tailwind CSS (CDN cho việc sử dụng các class Tailwind của Yody) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'theme-bg': '#ffffff',
+                        'theme-surface': '#f3f4f6',
+                        'theme-surface-hover': '#e5e7eb',
+                        'theme-text': '#111928',
+                        'border-primary': '#e5e7eb',
+                    },
+                    borderRadius: {
+                        'rounded': '0.375rem',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Các CSS tùy chỉnh cũ của bạn -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link th:href="@{/css/style.css}" rel="stylesheet">
 </head>
 
-<!-- Header -->
-<header th:fragment="header" class="sticky-top">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand fw-bold" th:href="@{/}">
-                <i class="bi bi-bag-heart-fill"></i> Fashion Store
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" th:href="@{/}">Trang chủ</a></li>
-                    <li class="nav-item"><a class="nav-link" th:href="@{/products}">Sản phẩm</a></li>
-                    <li class="nav-item"><a class="nav-link" th:href="@{/about}">Giới thiệu</a></li>
-                    <li class="nav-item"><a class="nav-link" th:href="@{/contact}">Liên hệ</a></li>
-                </ul>
+<!-- Yody-style Header -->
+<header th:fragment="header"
+    class="sticky top-0 p-3 z-[60] flex justify-between border-b border-b-border-primary bg-white transition-all duration-300 ease-linear max-w-screen-sm mx-auto lg:max-w-full lg:px-12 lg:py-4 lg:flex lg:justify-between items-center"
+    style="background-color: #fff; border-color: #e5e7eb;">
 
-                <!-- Search Bar -->
-                <div class="position-relative me-3" style="min-width:260px;">
-                    <div class="input-group">
-                        <input type="text" id="navSearch" class="form-control form-control-sm"
-                            placeholder="🔍 Tìm sản phẩm..." autocomplete="off">
-                        <a id="navSearchBtn" th:href="@{/products}" class="btn btn-primary btn-sm">
-                            <i class="bi bi-search"></i>
-                        </a>
-                    </div>
-                    <!-- Autocomplete dropdown -->
-                    <div id="searchDropdown" class="position-absolute bg-white border rounded-3 shadow-lg w-100"
-                        style="top:calc(100% + 4px);left:0;z-index:9999;display:none;max-height:340px;overflow-y:auto;">
-                    </div>
-                </div>
-                <div class="d-flex align-items-center">
-                    <a th:href="@{/cart}" class="btn btn-outline-light me-2 position-relative">
-                        <i class="bi bi-cart3"></i> Giỏ hàng
-                        <!-- Badge số lượng — chỉ hiện khi có sản phẩm trong giỏ -->
-                        <span th:if="${cartItemCount != null and cartItemCount > 0}"
-                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                            th:text="${cartItemCount}" style="font-size:10px;">0</span>
-                    </a>
+    <!-- Logo -->
+    <a aria-label="home" th:href="@{/}" class="flex items-center gap-2 text-decoration-none">
+        <i class="bi bi-bag-heart-fill fs-3 text-warning"></i>
+        <span class="font-bold text-xl text-dark">Fashion Store</span>
+    </a>
 
-                    <!-- Nếu chưa đăng nhập -->
-                    <th:block sec:authorize="!isAuthenticated()">
-                        <a th:href="@{/login}" class="btn btn-primary">Đăng nhập</a>
-                    </th:block>
+    <!-- Desktop Menu (Ẩn trên mobile, hiện trên LG) -->
+    <div class="hidden lg:flex items-center gap-6 font-medium text-gray-700">
+        <a class="hover:text-warning transition-colors text-decoration-none text-dark" th:href="@{/}">Trang chủ</a>
+        <a class="hover:text-warning transition-colors text-decoration-none text-dark" th:href="@{/products}">Sản
+            phẩm</a>
+        <a class="hover:text-warning transition-colors text-decoration-none text-dark" th:href="@{/about}">Giới
+            thiệu</a>
+        <a class="hover:text-warning transition-colors text-decoration-none text-dark" th:href="@{/contact}">Liên hệ</a>
+    </div>
 
-                    <!-- Nếu đã đăng nhập -->
-                    <th:block sec:authorize="isAuthenticated()">
-                        <div class="dropdown">
-                            <button class="btn btn-outline-light dropdown-toggle" type="button"
-                                data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle"></i>
-                                <span sec:authentication="name">User</span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" th:href="@{/profile}">
-                                        <i class="bi bi-person"></i> Tài khoản
-                                    </a></li>
-                                <li><a class="dropdown-item" th:href="@{/orders}">
-                                        <i class="bi bi-bag"></i> Đơn hàng
-                                    </a></li>
-                                <li><a class="dropdown-item" th:href="@{/wishlist}">
-                                        <i class="bi bi-heart text-danger"></i> Yêu thích
-                                    </a></li>
-                                <li sec:authorize="hasRole('ADMIN')">
-                                    <a class="dropdown-item text-danger" th:href="@{/admin}">
-                                        <i class="bi bi-gear"></i> Admin
-                                    </a>
-                                </li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <form th:action="@{/logout}" method="post" class="d-inline">
-                                        <button type="submit" class="dropdown-item">
-                                            <i class="bi bi-box-arrow-right"></i> Đăng xuất
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
-                    </th:block>
-                </div>
+    <!-- Search + Actions -->
+    <div class="flex items-center gap-4">
+        <!-- Search Bar -->
+        <div class="position-relative hidden md:block" style="min-width:260px;">
+            <div class="input-group">
+                <input type="text" id="navSearch" class="form-control form-control-sm border-gray-300"
+                    placeholder="🔍 Tìm sản phẩm..." autocomplete="off">
+                <a id="navSearchBtn" th:href="@{/products}" class="btn btn-warning btn-sm text-white">
+                    <i class="bi bi-search"></i>
+                </a>
+            </div>
+            <!-- Autocomplete dropdown -->
+            <div id="searchDropdown" class="position-absolute bg-white border rounded-3 shadow-lg w-100"
+                style="top:calc(100% + 4px);left:0;z-index:9999;display:none;max-height:340px;overflow-y:auto;">
             </div>
         </div>
-    </nav>
+
+        <!-- Yêu thích -->
+        <a th:href="@{/wishlist}" class="text-gray-600 hover:text-danger transition-colors" title="Yêu thích">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+            </svg>
+        </a>
+
+        <!-- Cart (Yody Style) -->
+        <a aria-label="cart" th:href="@{/cart}"
+            class="flex items-center gap-2 p-1 text-gray-600 hover:text-warning transition-colors text-decoration-none">
+            <div class="relative inline-block">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z">
+                    </path>
+                </svg>
+                <span th:if="${cartItemCount != null and cartItemCount > 0}" id="cartBadge"
+                    class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                    th:text="${cartItemCount}">1</span>
+            </div>
+            <span class="hidden md:inline font-medium">Giỏ hàng</span>
+        </a>
+
+        <!-- Auth / User (Yody Style) -->
+        <th:block sec:authorize="!isAuthenticated()">
+            <a aria-label="login" th:href="@{/login}"
+                class="cursor-pointer flex items-center gap-1 p-1 text-gray-600 hover:text-warning transition-colors text-decoration-none">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z">
+                    </path>
+                </svg>
+                <span class="hidden md:inline font-medium">Đăng nhập</span>
+            </a>
+        </th:block>
+
+        <th:block sec:authorize="isAuthenticated()">
+            <div class="dropdown">
+                <button
+                    class="btn btn-sm btn-light border-0 d-flex align-items-center gap-2 p-1 text-gray-600 hover:text-warning transition-colors"
+                    type="button" data-bs-toggle="dropdown">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z">
+                        </path>
+                    </svg>
+                    <span class="hidden md:inline font-medium" sec:authentication="name">User</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                    <li><a class="dropdown-item py-2" th:href="@{/profile}"><i class="bi bi-person me-2"></i>Tài
+                            khoản</a></li>
+                    <li><a class="dropdown-item py-2" th:href="@{/orders}"><i class="bi bi-bag me-2"></i>Đơn hàng</a>
+                    </li>
+                    <li sec:authorize="hasRole('ADMIN')">
+                        <a class="dropdown-item py-2 text-danger fw-bold" th:href="@{/admin}"><i
+                                class="bi bi-gear me-2"></i>Admin Dashboard</a>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li>
+                        <form th:action="@{/logout}" method="post" class="d-inline">
+                            <button type="submit" class="dropdown-item py-2"><i
+                                    class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </th:block>
+
+    </div>
 </header>
 
 <!-- Footer -->
-<footer th:fragment="footer" class="bg-dark text-white py-5 mt-5">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <h5><i class="bi bi-bag-heart-fill"></i> Fashion Store</h5>
-                <p class="text-muted">Thời trang chất lượng, phong cách hiện đại.</p>
+<footer th:fragment="footer" class="bg-gray-100 text-gray-700 pt-12 pb-6 mt-12 border-t border-gray-200">
+    <div class="container mx-auto px-4 lg:px-12">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <!-- Brand Info -->
+            <div>
+                <a class="flex items-center gap-2 text-decoration-none mb-4" th:href="@{/}">
+                    <i class="bi bi-bag-heart-fill fs-3 text-warning"></i>
+                    <span class="font-bold text-xl text-dark">Fashion Store</span>
+                </a>
+                <p class="text-sm text-gray-600 mb-4">"Look Good - Feel Good" - Thương hiệu thời trang uy tín đem đến
+                    cho bạn những sản phẩm chất lượng nhất với dịch vụ tận tâm.</p>
+                <div class="flex gap-4">
+                    <a href="#" class="text-gray-400 hover:text-blue-600 transition-colors"><i
+                            class="fab fa-facebook-f text-xl"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-pink-600 transition-colors"><i
+                            class="fab fa-instagram text-xl"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-red-600 transition-colors"><i
+                            class="fab fa-youtube text-xl"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-black transition-colors"><i
+                            class="fab fa-tiktok text-xl"></i></a>
+                </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <h5>Liên kết</h5>
-                <ul class="list-unstyled">
-                    <li><a href="#" class="text-muted">Chính sách bảo mật</a></li>
-                    <li><a href="#" class="text-muted">Điều khoản sử dụng</a></li>
-                    <li><a href="#" class="text-muted">Hướng dẫn mua hàng</a></li>
+
+            <!-- Links -->
+            <div>
+                <h3 class="font-bold text-lg mb-4 text-dark">Về chúng tôi</h3>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#" class="text-gray-600 hover:text-warning text-decoration-none transition-colors">Giới
+                            thiệu Fashion Store</a></li>
+                    <li><a href="#"
+                            class="text-gray-600 hover:text-warning text-decoration-none transition-colors">Tuyển
+                            dụng</a></li>
+                    <li><a href="#" class="text-gray-600 hover:text-warning text-decoration-none transition-colors">Tin
+                            tức thời trang</a></li>
+                    <li><a href="#" class="text-gray-600 hover:text-warning text-decoration-none transition-colors">Hệ
+                            thống cửa hàng</a></li>
                 </ul>
             </div>
-            <div class="col-md-4 mb-4">
-                <h5>Liên hệ</h5>
-                <p class="text-muted">
-                    <i class="bi bi-geo-alt"></i> Dĩ An TP.HCM<br>
-                    <i class="bi bi-telephone"></i> 0355555555<br>
-                    <i class="bi bi-envelope"></i> hnam19122004@gmail.com
-                </p>
+
+            <!-- Support -->
+            <div>
+                <h3 class="font-bold text-lg mb-4 text-dark">Hỗ trợ khách hàng</h3>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#"
+                            class="text-gray-600 hover:text-warning text-decoration-none transition-colors">Hướng dẫn
+                            chọn size</a></li>
+                    <li><a href="#"
+                            class="text-gray-600 hover:text-warning text-decoration-none transition-colors">Chính sách
+                            kiểm hàng</a></li>
+                    <li><a href="#"
+                            class="text-gray-600 hover:text-warning text-decoration-none transition-colors">Chính sách
+                            đổi trả</a></li>
+                    <li><a href="#"
+                            class="text-gray-600 hover:text-warning text-decoration-none transition-colors">Chính sách
+                            bảo mật</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact -->
+            <div>
+                <h3 class="font-bold text-lg mb-4 text-dark">Liên hệ</h3>
+                <ul class="space-y-3 text-sm">
+                    <li class="flex items-start gap-3">
+                        <i class="bi bi-geo-alt mt-1 text-warning"></i>
+                        <span class="text-gray-600">Dĩ An, Bình Dương, Việt Nam</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="bi bi-telephone text-warning"></i>
+                        <span class="text-gray-600 font-medium">035 555 5555</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="bi bi-envelope text-warning"></i>
+                        <span class="text-gray-600">hnam19122004@gmail.com</span>
+                    </li>
+                </ul>
             </div>
         </div>
-        <hr>
-        <p class="text-center text-muted mb-0">© 2024 Fashion Store. All rights reserved.</p>
+
+        <div
+            class="border-t border-gray-200 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
+            <p>© 2024 Fashion Store. All rights reserved.</p>
+            <div class="mt-4 md:mt-0 flex gap-4">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg"
+                    alt="Payment" class="h-6 opacity-70">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal"
+                    class="h-6 opacity-70">
+            </div>
+        </div>
     </div>
 </footer>
 
 <!-- Navbar Search JS -->
 <script>
-    (function () {
-        const inp = document.getElementById('navSearch');
-        const box = document.getElementById('searchDropdown');
-        const btn = document.getElementById('navSearchBtn');
-        if (!inp) return;
+        (function () {
+            const inp = document.getElementById('navSearch');
+            const box = document.getElementById('searchDropdown');
+            const btn = document.getElementById('navSearchBtn');
+            if (!inp) return;
 
-        let timer;
-        inp.addEventListener('input', () => {
-            clearTimeout(timer);
-            const q = inp.value.trim();
-            if (!q) { box.style.display = 'none'; return; }
+            let timer;
+            inp.addEventListener('input', () => {
+                clearTimeout(timer);
+                const q = inp.value.trim();
+                if (!q) { box.style.display = 'none'; return; }
 
-            // Update search button href
-            btn.href = '/products?keyword=' + encodeURIComponent(q);
+                // Update search button href
+                btn.href = '/products?keyword=' + encodeURIComponent(q);
 
-            timer = setTimeout(() => {
-                fetch('/api/products/search?q=' + encodeURIComponent(q))
-                    .then(r => r.json())
-                    .then(items => {
-                        if (!items.length) { box.style.display = 'none'; return; }
-                        box.innerHTML = items.map(p => `
+                timer = setTimeout(() => {
+                    fetch('/api/products/search?q=' + encodeURIComponent(q))
+                        .then(r => r.json())
+                        .then(items => {
+                            if (!items.length) { box.style.display = 'none'; return; }
+                            box.innerHTML = items.map(p => `
                         <a href="/products/${p.slug}" class="d-flex align-items-center gap-2 p-2 text-decoration-none text-dark border-bottom" style="hover:background:#f8f9fa;">
                             <img src="${p.image || 'https://placehold.co/40x40?text=SP'}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
                             <div>
@@ -159,21 +278,21 @@
                                 <div class="text-danger small">${p.price.toLocaleString('vi-VN')}đ</div>
                             </div>
                         </a>`).join('');
-                        box.innerHTML += `<a href="/products?keyword=${encodeURIComponent(q)}" class="d-block text-center p-2 small text-primary">Xem tất cả kết quả →</a>`;
-                        box.style.display = 'block';
-                    })
-                    .catch(() => { box.style.display = 'none'; });
-            }, 300);
-        });
+                            box.innerHTML += `<a href="/products?keyword=${encodeURIComponent(q)}" class="d-block text-center p-2 small text-primary">Xem tất cả kết quả →</a>`;
+                            box.style.display = 'block';
+                        })
+                        .catch(() => { box.style.display = 'none'; });
+                }, 300);
+            });
 
-        inp.addEventListener('keydown', e => {
-            if (e.key === 'Enter') window.location.href = '/products?keyword=' + encodeURIComponent(inp.value.trim());
-        });
+            inp.addEventListener('keydown', e => {
+                if (e.key === 'Enter') window.location.href = '/products?keyword=' + encodeURIComponent(inp.value.trim());
+            });
 
-        document.addEventListener('click', e => {
-            if (!inp.contains(e.target) && !box.contains(e.target)) box.style.display = 'none';
-        });
-    })();
+            document.addEventListener('click', e => {
+                if (!inp.contains(e.target) && !box.contains(e.target)) box.style.display = 'none';
+            });
+        })();
 </script>
 <!-- Global Toast container (góc dưới phải) -->
 <div id="toastContainer"
