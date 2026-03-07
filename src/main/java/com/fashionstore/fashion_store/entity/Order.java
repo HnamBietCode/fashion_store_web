@@ -82,6 +82,7 @@ public class Order {
         COD, // Thanh toán khi nhận hàng
         BANK_TRANSFER, // Chuyển khoản
         PAYPAL, // Thanh toán qua PayPal Sandbox
+        MOMO, // Thanh toán qua Momo
         VNPAY // (Legacy) Chỉ dùng để mapping các đơn hàng cũ trong DB, không hiện trên UI
     }
 }

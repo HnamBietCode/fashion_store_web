@@ -70,11 +70,25 @@
                                     th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
                             </div>
                             <div class="d-flex gap-2">
-                                <a th:if="${order.status.name() == 'PENDING'}"
-                                    th:href="@{/paypal-checkout(orderNumber=${order.orderNumber})}"
-                                    class="btn btn-sm btn-warning fw-semibold">
-                                    <i class="bi bi-paypal me-1"></i>Thanh toán Paypal
-                                </a>
+                                <div class="dropdown" th:if="${order.status.name() == 'PENDING'}">
+                                    <button class="btn btn-sm btn-warning fw-semibold dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-credit-card me-1"></i>Thanh toán ngay
+                                    </button>
+                                    <ul class="dropdown-menu shadow-sm border-0">
+                                        <li><a class="dropdown-item py-2"
+                                                th:href="@{/orders/pay(orderNumber=${order.orderNumber}, method='MOMO')}">
+                                                <img src="https://developers.momo.vn/v3/assets/images/square-8c08a00f550e40a2efafea4a005b1232.png"
+                                                    style="width: 20px; height: 20px; border-radius: 4px;"
+                                                    class="me-2">Thanh toán qua Ví MoMo
+                                            </a></li>
+                                        <li><a class="dropdown-item py-2"
+                                                th:href="@{/orders/pay(orderNumber=${order.orderNumber}, method='PAYPAL')}">
+                                                <i class="bi bi-paypal text-primary fs-5 me-2"
+                                                    style="vertical-align: middle;"></i>Thanh toán qua PayPal
+                                            </a></li>
+                                    </ul>
+                                </div>
                                 <a th:href="@{/orders/{num}(num=${order.orderNumber})}"
                                     class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-eye me-1"></i>Xem chi tiết

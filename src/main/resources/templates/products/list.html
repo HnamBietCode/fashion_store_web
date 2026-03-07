@@ -10,164 +10,199 @@
         <div class="container">
             <div class="row g-4">
 
-                <!-- ===== SIDEBAR FILTER ===== -->
+                <!-- ===== SIDEBAR FILTER (Coolmate Style) ===== -->
                 <div class="col-lg-3">
                     <form th:action="@{/products}" method="get" id="filterForm">
-                        <!-- Search -->
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <label class="form-label fw-bold mb-2"><i class="bi bi-search me-1"></i>Tìm kiếm</label>
-                                <div class="input-group">
-                                    <input type="text" name="search" class="form-control" placeholder="Tên sản phẩm..."
-                                        th:value="${search}">
-                                    <button class="btn btn-primary" type="submit">
-                                        <i class="bi bi-search"></i>
-                                    </button>
-                                </div>
+                        <div class="sticky-top" style="top: 80px; z-index: 10; padding-right: 15px;">
+                            <!-- Filter Header -->
+                            <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-3">
+                                <h2 class="mb-0 fw-bold" style="font-size: 16px;">Bộ lọc</h2>
+                                <span class="text-muted" style="font-size: 14px;"
+                                    th:text="${products.totalElements} + ' kết quả'">0 kết quả</span>
                             </div>
-                        </div>
 
-                        <!-- Categories -->
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h6 class="fw-bold mb-3"><i class="bi bi-tags me-1"></i>Danh mục</h6>
-                                <div class="d-flex flex-column gap-1">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="category" id="cat_all"
-                                            value="" th:checked="${selectedCategory == null}"
-                                            onchange="this.form.submit()">
-                                        <label class="form-check-label" for="cat_all">Tất cả</label>
-                                    </div>
-                                    <div class="form-check" th:each="cat : ${categories}">
-                                        <input class="form-check-input" type="radio" name="category"
-                                            th:id="${'cat_' + cat.id}" th:value="${cat.id}"
-                                            th:checked="${selectedCategory == cat.id}" onchange="this.form.submit()">
-                                        <label class="form-check-label" th:for="${'cat_' + cat.id}"
-                                            th:text="${cat.name}">Category</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Price Range -->
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h6 class="fw-bold mb-3"><i class="bi bi-currency-dollar me-1"></i>Khoảng giá</h6>
-                                <div class="mb-2">
-                                    <label class="form-label small text-muted">Giá tối thiểu</label>
-                                    <div class="input-group input-group-sm">
-                                        <input type="number" name="minPrice" class="form-control" placeholder="0"
-                                            min="0" step="10000" th:value="${minPrice}">
-                                        <span class="input-group-text">đ</span>
-                                    </div>
-                                </div>
+                            <div class="d-flex flex-column gap-0">
+                                <!-- Search -->
                                 <div class="mb-3">
-                                    <label class="form-label small text-muted">Giá tối đa</label>
-                                    <div class="input-group input-group-sm">
-                                        <input type="number" name="maxPrice" class="form-control"
-                                            placeholder="Không giới hạn" min="0" step="10000" th:value="${maxPrice}">
-                                        <span class="input-group-text">đ</span>
+                                    <div class="input-group">
+                                        <input type="text" name="search" class="form-control border-end-0 shadow-none"
+                                            placeholder="Tìm kiếm sản phẩm..." th:value="${search}"
+                                            style="font-size: 14px; border-radius: 20px 0 0 20px;">
+                                        <button class="btn border border-start-0 text-muted shadow-none" type="submit"
+                                            style="background-color: transparent; border-radius: 0 20px 20px 0;">
+                                            <i class="bi bi-search" style="font-size: 14px;"></i>
+                                        </button>
                                     </div>
                                 </div>
-                                <!-- Quick price shortcuts -->
-                                <div class="d-flex flex-wrap gap-1 mb-3">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                                        onclick="setPrice(0, 200000)">Dưới 200k</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                                        onclick="setPrice(200000, 500000)">200k-500k</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                                        onclick="setPrice(500000, null)">Trên 500k</button>
+
+                                <!-- Danh mục -->
+                                <div class="border-bottom py-3">
+                                    <h3 class="mb-0">
+                                        <div class="text-dark d-flex justify-content-between align-items-center w-100 p-0"
+                                            style="font-size: 15px; font-weight: 500;">
+                                            Danh mục
+                                        </div>
+                                    </h3>
+                                    <div class="mt-3">
+                                        <div class="d-flex flex-column gap-3">
+                                            <label class="d-flex align-items-center m-0" style="cursor: pointer;">
+                                                <input type="radio" name="category" value=""
+                                                    th:checked="${selectedCategory == null}"
+                                                    onchange="this.form.submit()" class="me-3"
+                                                    style="width: 18px; height: 18px; accent-color: #000; cursor: pointer;">
+                                                <span class="text-dark" style="font-size: 15px;">Tất cả</span>
+                                            </label>
+                                            <label class="d-flex align-items-center m-0" th:each="cat : ${categories}"
+                                                style="cursor: pointer;">
+                                                <input type="radio" name="category" th:value="${cat.id}"
+                                                    th:checked="${selectedCategory == cat.id}"
+                                                    onchange="this.form.submit()" class="me-3"
+                                                    style="width: 18px; height: 18px; accent-color: #000; cursor: pointer;">
+                                                <span class="text-dark" style="font-size: 15px;"
+                                                    th:text="${cat.name}">Category</span>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100 btn-sm">
-                                    <i class="bi bi-funnel me-1"></i>Áp dụng
-                                </button>
+
+                                <!-- Khoảng giá -->
+                                <div class="border-bottom py-3">
+                                    <h3 class="mb-0">
+                                        <div class="text-dark d-flex justify-content-between align-items-center w-100 p-0"
+                                            style="font-size: 15px; font-weight: 500;">
+                                            Khoảng giá
+                                        </div>
+                                    </h3>
+                                    <div class="mt-3">
+                                        <div class="d-flex flex-column gap-3">
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <input type="number" name="minPrice"
+                                                        class="form-control form-control-sm shadow-none"
+                                                        placeholder="Tối thiểu" min="0" step="10000"
+                                                        th:value="${minPrice}" style="font-size:14px;">
+                                                </div>
+                                                <div class="col-6">
+                                                    <input type="number" name="maxPrice"
+                                                        class="form-control form-control-sm shadow-none"
+                                                        placeholder="Tối đa" min="0" step="10000" th:value="${maxPrice}"
+                                                        style="font-size:14px;">
+                                                </div>
+                                            </div>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <button type="button"
+                                                    class="btn btn-light btn-sm flex-grow-1 text-muted shadow-none"
+                                                    onclick="setPrice(0, 200000)" style="font-size: 13px;">Dưới
+                                                    200k</button>
+                                                <button type="button"
+                                                    class="btn btn-light btn-sm flex-grow-1 text-muted shadow-none"
+                                                    onclick="setPrice(200000, 500000)" style="font-size: 13px;">200k -
+                                                    500k</button>
+                                                <button type="button"
+                                                    class="btn btn-light btn-sm flex-grow-1 text-muted shadow-none"
+                                                    onclick="setPrice(500000, null)" style="font-size: 13px;">Trên
+                                                    500k</button>
+                                            </div>
+                                            <button type="submit"
+                                                class="btn btn-dark btn-sm rounded-pill mt-2 w-100 py-2 shadow-none">Áp
+                                                dụng</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sắp xếp -->
+                                <div class="border-bottom py-3">
+                                    <h3 class="mb-0">
+                                        <div class="text-dark d-flex justify-content-between align-items-center w-100 p-0"
+                                            style="font-size: 15px; font-weight: 500;">
+                                            Sắp xếp
+                                        </div>
+                                    </h3>
+                                    <div class="mt-3">
+                                        <select name="sort" class="form-select border-0 shadow-none cursor-pointer"
+                                            onchange="this.form.submit()"
+                                            style="font-size: 15px; padding-left: 0; padding-right: 0;">
+                                            <option value="newest" th:selected="${sort == 'newest'}">Mới nhất</option>
+                                            <option value="price_asc" th:selected="${sort == 'price_asc'}">Giá thấp →
+                                                cao</option>
+                                            <option value="price_desc" th:selected="${sort == 'price_desc'}">Giá cao →
+                                                thấp</option>
+                                            <option value="name" th:selected="${sort == 'name'}">Tên A-Z</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 text-center">
+                                    <a th:href="@{/products}" class="text-decoration-none text-muted"
+                                        style="font-size: 14px;">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i> Xóa bộ lọc
+                                    </a>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- Sort -->
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h6 class="fw-bold mb-3"><i class="bi bi-sort-down me-1"></i>Sắp xếp</h6>
-                                <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
-                                    <option value="newest" th:selected="${sort == 'newest'}">Mới nhất</option>
-                                    <option value="price_asc" th:selected="${sort == 'price_asc'}">Giá thấp → cao
-                                    </option>
-                                    <option value="price_desc" th:selected="${sort == 'price_desc'}">Giá cao → thấp
-                                    </option>
-                                    <option value="name" th:selected="${sort == 'name'}">Tên A-Z</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Reset -->
-                        <a th:href="@{/products}" class="btn btn-outline-secondary w-100 btn-sm">
-                            <i class="bi bi-x-circle me-1"></i>Xóa bộ lọc
-                        </a>
                     </form>
                 </div>
+
 
                 <!-- ===== PRODUCTS GRID ===== -->
                 <div class="col-lg-9">
                     <!-- Header bar -->
-                    <div
-                        class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
                         <div>
-                            <h5 class="mb-0 fw-bold">
+                            <h1 class="mb-0 fw-bold fs-4 text-uppercase">
                                 <span th:if="${search}">Kết quả: "<span th:text="${search}"></span>"</span>
-                                <span th:unless="${search}">Sản phẩm</span>
-                            </h5>
-                            <!-- Active filters badges -->
-                            <div class="mt-1 d-flex flex-wrap gap-1">
-                                <span th:if="${selectedCategory != null}" class="badge bg-primary">
-                                    <i class="bi bi-tag me-1"></i>Danh mục đã chọn
-                                </span>
-                                <span th:if="${minPrice != null}" class="badge bg-info text-dark"
-                                    th:text="'Từ ' + ${#numbers.formatDecimal(minPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
-                                <span th:if="${maxPrice != null}" class="badge bg-info text-dark"
-                                    th:text="'Đến ' + ${#numbers.formatDecimal(maxPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
-                            </div>
+                                <span th:unless="${search}"
+                                    th:text="${selectedCategory != null} ? ${categories.stream().filter(c -> c.id == selectedCategory).findFirst().get().name} : 'Tất cả sản phẩm'">Sản
+                                    phẩm</span>
+                            </h1>
                         </div>
-                        <span class="text-muted" th:text="${products.totalElements} + ' sản phẩm'">0</span>
+                        <span class="text-muted small" th:text="${products.totalElements} + ' kết quả'">0</span>
+                    </div>
+
+                    <!-- Active filters badges -->
+                    <div class="mb-4 d-flex flex-wrap gap-2" th:if="${minPrice != null or maxPrice != null}">
+                        <span th:if="${minPrice != null}"
+                            class="badge bg-light text-dark border px-3 py-2 fw-normal rounded-pill"
+                            th:text="'Giá từ: ' + ${#numbers.formatDecimal(minPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                        <span th:if="${maxPrice != null}"
+                            class="badge bg-light text-dark border px-3 py-2 fw-normal rounded-pill"
+                            th:text="'Giá đến: ' + ${#numbers.formatDecimal(maxPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                     </div>
 
                     <!-- Product Cards Grid -->
                     <div class="row g-3">
-                        <div class="col-md-6 col-xl-4" th:each="product : ${products.content}">
-                            <div class="card h-100 shadow-sm border-0"
-                                style="transition:transform .2s; border-radius:14px!important;"
-                                onmouseover="this.style.transform='translateY(-4px)'"
-                                onmouseout="this.style.transform='translateY(0)'">
-                                <div class="position-relative overflow-hidden" style="border-radius:14px 14px 0 0;">
-                                    <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://placehold.co/300x220?text=' + product.name}"
-                                        class="card-img-top" th:alt="${product.name}"
-                                        style="height:220px;object-fit:cover;">
+                        <div class="col-6 col-md-4 col-lg-3" th:each="product : ${products.content}">
+                            <div class="card h-100 border-0" style="background-color: transparent;">
+                                <div class="position-relative overflow-hidden mb-2"
+                                    style="border-radius:12px; aspect-ratio: 3/4; background-color: #f1f1f1;">
+                                    <a th:href="@{/products/{slug}(slug=${product.slug})}">
+                                        <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://placehold.co/300x400?text=' + product.name}"
+                                            class="w-100 h-100" th:alt="${product.name}"
+                                            style="object-fit:cover; transition: transform 0.3s;"
+                                            onmouseover="this.style.transform='scale(1.05)'"
+                                            onmouseout="this.style.transform='scale(1)'">
+                                    </a>
                                     <span th:if="${product.salePrice != null}"
-                                        class="badge bg-danger position-absolute top-0 end-0 m-2 fs-6">
+                                        class="badge bg-danger position-absolute top-0 end-0 m-2 fs-6 px-2 py-1 shadow-sm">
                                         SALE
                                     </span>
-                                    <span th:if="${product.featured}"
-                                        class="badge bg-warning text-dark position-absolute top-0 start-0 m-2">
-                                        ⭐ Nổi bật
-                                    </span>
                                 </div>
-                                <div class="card-body d-flex flex-column">
-                                    <p class="text-muted small mb-1" th:text="${product.category.name}">Category</p>
-                                    <h6 class="fw-semibold mb-2" th:text="${product.name}">Product Name</h6>
-                                    <div class="mt-auto">
-                                        <div class="d-flex align-items-center gap-2 mb-3">
-                                            <span th:if="${product.salePrice != null}" class="text-danger fw-bold fs-6"
-                                                th:text="${#numbers.formatDecimal(product.salePrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
-                                            <small th:if="${product.salePrice != null}"
-                                                class="text-muted text-decoration-line-through"
-                                                th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</small>
-                                            <span th:if="${product.salePrice == null}" class="text-primary fw-bold fs-6"
-                                                th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
-                                        </div>
-                                        <a th:href="@{/products/{slug}(slug=${product.slug})}"
-                                            class="btn btn-primary w-100">
-                                            <i class="bi bi-eye me-1"></i>Xem chi tiết
-                                        </a>
+                                <div class="card-body p-0 d-flex flex-column pt-3">
+                                    <div class="d-flex align-items-baseline gap-2 mb-1">
+                                        <span th:if="${product.salePrice != null}" class="fw-bold"
+                                            style="color: #000; font-size: 15px;"
+                                            th:text="${#numbers.formatDecimal(product.salePrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                                        <del th:if="${product.salePrice != null}" class="text-muted small"
+                                            th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</del>
+                                        <span th:if="${product.salePrice == null}" class="fw-bold"
+                                            style="color: #000; font-size: 15px;"
+                                            th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
                                     </div>
+                                    <a th:href="@{/products/{slug}(slug=${product.slug})}" class="text-decoration-none"
+                                        style="color: #000;">
+                                        <h2 class="fw-normal mb-2 text-truncate" style="font-size: 14px;"
+                                            th:text="${product.name}">Product Name</h2>
+                                    </a>
                                 </div>
                             </div>
                         </div>

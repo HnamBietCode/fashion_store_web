@@ -35,103 +35,174 @@
 
             <div class="row g-5">
                 <!-- Product Image -->
+                <!-- Product Image Gallery (YODY Style) -->
                 <div class="col-lg-6">
-                    <div class="card border-0 shadow-sm overflow-hidden" style="border-radius:16px;">
-                        <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://placehold.co/600x500?text=SP'}"
-                            class="w-100" style="max-height:520px;object-fit:contain;background:#f8f9fa;"
-                            th:alt="${product.name}">
+                    <div class="d-flex gap-3">
+                        <!-- Thumbnails (Hide on small screens) -->
+                        <div class="d-none d-md-flex flex-column gap-2" style="width: 80px;">
+                            <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://placehold.co/600x800?text=SP'}"
+                                class="w-100 rounded border border-warning cursor-pointer"
+                                style="object-fit: cover; aspect-ratio: 3/4;">
+                            <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://placehold.co/600x800?text=SP'}"
+                                class="w-100 rounded border cursor-pointer opacity-75"
+                                style="object-fit: cover; aspect-ratio: 3/4;">
+                            <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://placehold.co/600x800?text=SP'}"
+                                class="w-100 rounded border cursor-pointer opacity-75"
+                                style="object-fit: cover; aspect-ratio: 3/4;">
+                        </div>
+                        <!-- Main Image -->
+                        <div class="flex-grow-1">
+                            <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://placehold.co/600x800?text=SP'}"
+                                class="w-100 rounded-3" style="object-fit:cover; aspect-ratio: 3/4; background:#f1f1f1;"
+                                th:alt="${product.name}">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Product Info -->
-                <div class="col-lg-6">
-                    <span class="badge bg-secondary mb-2" th:text="${product.category.name}">Category</span>
-                    <h2 class="fw-bold" th:text="${product.name}">Product Name</h2>
-
-                    <!-- Rating stars (average) -->
-                    <div class="d-flex align-items-center gap-2 mb-3" th:if="${reviewCount > 0}">
-                        <div>
-                            <th:block th:each="i : ${#numbers.sequence(1, 5)}">
-                                <i
-                                    th:class="${i <= avgRating} ? 'bi bi-star-fill text-warning' : 'bi bi-star text-muted'"></i>
-                            </th:block>
-                        </div>
-                        <span class="text-muted small"
-                            th:text="${#numbers.formatDecimal(avgRating, 1, 1)} + '/5 (' + ${reviewCount} + ' đánh giá)'"></span>
-                    </div>
-                    <p class="text-muted small" th:if="${reviewCount == 0}">Chưa có đánh giá nào</p>
-
+                <div class="col-lg-6 ps-lg-4">
                     <!-- Price -->
-                    <div class="my-3">
-                        <span th:if="${product.salePrice != null}" class="h3 text-danger fw-bold me-2"
+                    <div class="mb-2 d-flex align-items-center gap-2">
+                        <span th:if="${product.salePrice != null}" class="fs-4 fw-bold" style="color: #111928;"
                             th:text="${#numbers.formatDecimal(product.salePrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
-                        <span th:if="${product.salePrice != null}" class="h5 text-muted text-decoration-line-through"
-                            th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
-                        <span th:if="${product.salePrice == null}" class="h3 text-primary fw-bold"
+                        <del th:if="${product.salePrice != null}" class="text-muted"
+                            th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</del>
+                        <span th:if="${product.salePrice == null}" class="fs-4 fw-bold" style="color: #111928;"
                             th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
                         <span th:if="${product.salePrice != null}" class="badge bg-danger ms-2">
                             SALE
                         </span>
                     </div>
 
-                    <!-- Stock -->
-                    <p th:if="${product.stockQuantity > 0}" class="text-success">
-                        <i class="bi bi-check-circle"></i> Còn hàng (<span th:text="${product.stockQuantity}"></span>
-                        sản phẩm)
-                    </p>
-                    <p th:if="${product.stockQuantity <= 0}" class="text-danger">
-                        <i class="bi bi-x-circle"></i> Hết hàng
-                    </p>
+                    <h1 class="fs-5 fw-normal mb-1" style="color: #111928;" th:text="${product.name}">Product Name</h1>
+                    <p class="text-muted small mb-3">Mã SP: <span th:text="${product.slug}">MCTS...</span></p>
 
-                    <!-- Variants (size/color) -->
+                    <!-- Variants (Color / Size) -->
                     <div th:if="${!product.variants.isEmpty()}" class="mb-4">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Kích thước:</label>
+                            <label class="form-label small fw-semibold">Màu sắc:</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <!-- Dummy swatches based on the screenshot -->
+                                <button type="button"
+                                    class="btn p-0 border border-warning rounded-circle overflow-hidden shadow-sm"
+                                    style="width: 32px; height: 32px; padding: 2px !important;">
+                                    <div class="w-100 h-100 rounded-circle" style="background-color: #f1f1f1;"></div>
+                                </button>
+                                <button type="button"
+                                    class="btn p-0 border rounded-circle overflow-hidden bg-white shadow-sm opacity-75"
+                                    style="width: 32px; height: 32px; padding: 2px !important;">
+                                    <div class="w-100 h-100 rounded-circle" style="background-color: #333;"></div>
+                                </button>
+                                <button type="button"
+                                    class="btn p-0 border rounded-circle overflow-hidden bg-white shadow-sm opacity-75"
+                                    style="width: 32px; height: 32px; padding: 2px !important;">
+                                    <div class="w-100 h-100 rounded-circle" style="background-color: #8c7362;"></div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label small fw-semibold mb-0">Kích thước:</label>
+                                <a href="#" class="text-primary text-decoration-none small">Hướng dẫn chọn size</a>
+                            </div>
                             <div class="d-flex flex-wrap gap-2">
                                 <th:block th:each="variant : ${product.variants}">
                                     <input type="radio" class="btn-check" th:id="${'size-' + variant.id}"
                                         name="variantId" th:value="${variant.id}">
-                                    <label class="btn btn-outline-dark btn-sm" th:for="${'size-' + variant.id}"
-                                        th:text="${variant.size + (variant.color != null ? ' / ' + variant.color : '')}">S</label>
+                                    <label class="btn btn-outline-dark btn-sm rounded-pill px-3 py-1 bg-white"
+                                        th:for="${'size-' + variant.id}" th:text="${variant.size}">S</label>
                                 </th:block>
                             </div>
                         </div>
                     </div>
 
                     <!-- Quantity + Add to Cart -->
-                    <form th:action="@{/cart/add}" method="post" class="mb-3">
+                    <form th:action="@{/cart/add}" method="post" class="mb-4">
                         <input type="hidden" name="productId" th:value="${product.id}">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="input-group" style="width:130px;">
-                                <button type="button" class="btn btn-outline-secondary"
+                            <div class="input-group flex-nowrap border rounded-pill overflow-hidden bg-white"
+                                style="width: 130px; height: 44px;">
+                                <button type="button"
+                                    class="btn btn-light border-0 px-3 flex-shrink-0 fw-bold fs-5 h-100 d-flex align-items-center justify-content-center"
                                     onclick="changeQty(-1)">−</button>
-                                <input type="number" id="quantity" name="quantity" class="form-control text-center"
-                                    value="1" min="1" th:max="${product.stockQuantity}">
-                                <button type="button" class="btn btn-outline-secondary"
+                                <input type="number" id="quantity" name="quantity"
+                                    class="form-control border-0 text-center px-0 fw-semibold h-100" value="1" min="1"
+                                    th:max="${product.stockQuantity}" style="max-width: 44px; box-shadow: none;">
+                                <button type="button"
+                                    class="btn btn-light border-0 px-3 flex-shrink-0 fw-bold fs-5 h-100 d-flex align-items-center justify-content-center"
                                     onclick="changeQty(1)">+</button>
                             </div>
-                            <button type="submit" class="btn btn-primary btn-lg flex-grow-1"
-                                th:disabled="${product.stockQuantity <= 0}">
-                                <i class="bi bi-cart-plus me-1"></i>Thêm vào giỏ hàng
+                            <button type="submit"
+                                class="btn fw-bold rounded-pill px-4 flex-grow-1 shadow-sm h-100 d-flex align-items-center justify-content-center gap-2"
+                                th:disabled="${product.stockQuantity <= 0}"
+                                style="background-color: #fcaf17; color: #111928; border: none; min-height: 44px;">
+                                Thêm vào giỏ <i class="bi bi-bag"></i>
                             </button>
+                        </div>
+                        <div class="mt-3 d-flex align-items-center text-muted small">
+                            <i class="bi bi-shop me-2"></i> <a href="#" class="text-decoration-none text-muted">Xem cửa
+                                hàng còn sản phẩm</a>
                         </div>
                     </form>
 
-                    <!-- Wishlist toggle (chỉ hiện khi đã đăng nhập) -->
-                    <sec:authorize access="isAuthenticated()">
-                        <form th:action="@{/wishlist/toggle/{id}(id=${product.id})}" method="post">
-                            <input type="hidden" name="redirect" th:value="@{/products/{slug}(slug=${product.slug})}">
-                            <button type="submit" class="btn btn-outline-danger w-100">
-                                <i th:class="${inWishlist} ? 'bi bi-heart-fill' : 'bi bi-heart'" class="me-1"></i>
-                                <span th:text="${inWishlist} ? 'Đã yêu thích' : 'Thêm vào yêu thích'">Yêu thích</span>
-                            </button>
-                        </form>
-                    </sec:authorize>
+                    <!-- YODY Cam kết Policy -->
+                    <div class="mb-4 mt-4">
+                        <p class="fw-bold fs-6 mb-3 d-flex align-items-center gap-1">YODY cam kết <i
+                                class="bi bi-patch-check-fill text-success"></i></p>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div
+                                    class="border rounded-2 p-3 d-flex align-items-start gap-2 h-100 position-relative">
+                                    <i class="bi bi-arrow-repeat fs-5" style="color: #6c757d;"></i>
+                                    <div style="font-size: 13px; line-height: 1.4; color: #111928;">Đổi, trả
+                                        <strong>miễn phí</strong> tại nhà nếu <br>không hài lòng <br><a href="#"
+                                            class="text-primary text-decoration-none">Xem chính sách</a></div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div
+                                    class="border rounded-2 p-3 d-flex align-items-start gap-2 h-100 position-relative">
+                                    <i class="bi bi-truck fs-5" style="color: #6c757d;"></i>
+                                    <div style="font-size: 13px; line-height: 1.4; color: #111928;">Giao trong
+                                        <strong>3-5 ngày</strong> và <br>freeship đơn từ 498k</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div
+                                    class="border rounded-2 p-3 d-flex align-items-start gap-2 h-100 position-relative">
+                                    <i class="bi bi-shield-check fs-5" style="color: #6c757d;"></i>
+                                    <div style="font-size: 13px; line-height: 1.4; color: #111928;">Mọi thông tin thanh
+                                        toán là <strong>bảo mật</strong></div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div
+                                    class="border rounded-2 p-3 d-flex align-items-start gap-2 h-100 position-relative">
+                                    <i class="bi bi-headset fs-5" style="color: #6c757d;"></i>
+                                    <div style="font-size: 13px; line-height: 1.4; color: #111928;">Cần tư vấn thêm? <a
+                                            href="#" class="text-primary text-decoration-none">Chat ngay!</a></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                    <!-- Description -->
-                    <div class="border-top pt-4 mt-4">
-                        <h5>Mô tả sản phẩm</h5>
-                        <p class="text-muted" th:text="${product.description}">Description here...</p>
+                    <!-- Description and Advantages Tabs UI -->
+                    <div class="border rounded-3 p-4 mt-4 bg-white shadow-sm">
+                        <h5 class="fw-bold mb-3 fs-6">Chi tiết sản phẩm</h5>
+                        <p class="small text-muted mb-2"><i class="bi bi-box me-1"></i> Mã SP: <span
+                                th:text="${product.slug}" class="fw-medium text-dark"></span></p>
+                        <hr>
+                        <p class="small text-muted mb-1 fw-bold text-dark">Thành phần</p>
+                        <p class="small text-muted mb-3" th:text="${product.description} ?: 'Đang cập nhật thành phần'">
+                        </p>
+
+                        <p class="small text-muted mb-1 fw-bold text-dark">Ưu điểm chất liệu</p>
+                        <p class="small text-muted mb-0">
+                            - Co giãn linh hoạt: Kiểu dệt giúp vải đàn hồi tốt, ôm vừa vặn nhưng không gò bó.<br>
+                            - Thoáng mát, mềm mại: Hàm lượng cotton cao tạo cảm giác dễ chịu, hút ẩm tốt.<br>
+                            - Giữ form lâu: Cấu trúc dệt giúp duy trì độ đàn hồi.
+                        </p>
                     </div>
                 </div>
             </div>

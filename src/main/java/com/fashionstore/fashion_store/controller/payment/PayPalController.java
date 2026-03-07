@@ -67,7 +67,7 @@ public class PayPalController {
         if (captured) {
             orderService.getOrderByNumber(orderNumber).ifPresent(order -> {
                 if (order.getStatus() == Order.OrderStatus.PENDING) {
-                    orderService.confirmPayPalOrder(order.getId());
+                    orderService.confirmOnlinePayment(order.getId());
                 }
             });
             redirectAttributes.addFlashAttribute("orderNumber", orderNumber);

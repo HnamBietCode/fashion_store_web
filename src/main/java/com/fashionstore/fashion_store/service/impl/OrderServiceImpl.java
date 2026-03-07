@@ -74,7 +74,9 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         // Check stock and set status
-        processStockAndStatus(order, cartItems, paymentMethod == Order.PaymentMethod.PAYPAL);
+        boolean requiresPaymentConfirmation = paymentMethod == Order.PaymentMethod.PAYPAL
+                || paymentMethod == Order.PaymentMethod.MOMO;
+        processStockAndStatus(order, cartItems, requiresPaymentConfirmation);
 
         // Tạo order items từ cart
         for (CartItem cartItem : cartItems) {
@@ -144,7 +146,9 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         // Check stock and set status
-        processStockAndStatus(order, cartItems, paymentMethod == Order.PaymentMethod.PAYPAL);
+        boolean requiresPaymentConfirmation = paymentMethod == Order.PaymentMethod.PAYPAL
+                || paymentMethod == Order.PaymentMethod.MOMO;
+        processStockAndStatus(order, cartItems, requiresPaymentConfirmation);
 
         for (CartItem cartItem : cartItems) {
             Product product = cartItem.getProduct();
@@ -200,7 +204,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order confirmPayPalOrder(Long orderId) {
+    public Order confirmOnlinePayment(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
 
@@ -267,7 +271,7 @@ public class OrderServiceImpl implements OrderService {
         return "FS" + timestamp + random;
     }
 
-    private void processStockAndStatus(Order order, List<CartItem> cartItems, boolean isPayPal) {
+    private void processStockAndStatus(Order order, List<CartItem> cartItems, boolean requiresPaymentConfirmation) {
         order.setStatus(Order.OrderStatus.PENDING); // Default
 
         boolean allInStock = true;
@@ -285,7 +289,7 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        if (allInStock && !isPayPal) {
+        if (allInStock && !requiresPaymentConfirmation) {
             order.setStatus(Order.OrderStatus.SHIPPING);
             // Deduct stock
             for (CartItem item : cartItems) {

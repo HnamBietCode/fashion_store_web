@@ -24,7 +24,7 @@ public interface OrderService {
 
         Order updatePaymentMethod(Long orderId, Order.PaymentMethod paymentMethod);
 
-        Order confirmPayPalOrder(Long orderId);
+        Order confirmOnlinePayment(Long orderId);
 
         List<Order> getAllOrders();
 }

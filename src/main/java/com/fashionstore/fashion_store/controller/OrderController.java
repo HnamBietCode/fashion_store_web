@@ -83,11 +83,28 @@ public class OrderController {
                     method,
                     discountAmount);
 
-            // Thanh toán COD / BANK_TRANSFER: xử lý như cũ
-            emailService.sendOrderConfirmation(order);
-
             if (Order.PaymentMethod.PAYPAL.equals(method)) {
                 return "redirect:/paypal-checkout?orderNumber=" + order.getOrderNumber();
+            } else if (Order.PaymentMethod.MOMO.equals(method)) {
+                com.fashionstore.fashion_store.dto.momo.MomoCreatePaymentResponseModel response = ((com.fashionstore.fashion_store.service.IMomoService) org.springframework.web.context.support.WebApplicationContextUtils
+                        .getRequiredWebApplicationContext(request.getServletContext())
+                        .getBean(com.fashionstore.fashion_store.service.IMomoService.class)).createPayment(order);
+
+                if (response != null && response.getPayUrl() != null && !response.getPayUrl().isEmpty()) {
+                    return "redirect:" + response.getPayUrl();
+                } else {
+                    redirectAttributes.addFlashAttribute("error",
+                            "Lỗi tạo thanh toán MoMo: " + (response != null ? response.getMessage() : "Unknown error"));
+                    return "redirect:/checkout";
+                }
+            } else {
+                // Thanh toán COD / BANK_TRANSFER
+                try {
+                    emailService.sendOrderConfirmation(order);
+                } catch (Exception ex) {
+                    // Log error but don't fail the checkout just because email failed
+                    // log.error("Error sending order confirmation email", ex);
+                }
             }
 
             redirectAttributes.addFlashAttribute("orderNumber", order.getOrderNumber());
@@ -100,6 +117,44 @@ public class OrderController {
             redirectAttributes.addFlashAttribute("error", "Đặt hàng thất bại: " + e.getMessage());
             return "redirect:/checkout";
         }
+    }
+
+    @GetMapping("/orders/pay")
+    public String payPendingOrder(@RequestParam String orderNumber, @RequestParam String method,
+            @AuthenticationPrincipal UserDetails userDetails, RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
+        User user = getUser(userDetails);
+        Optional<Order> orderOpt = orderService.getOrderByNumber(orderNumber);
+        if (orderOpt.isEmpty() || !orderOpt.get().getUser().getId().equals(user.getId())
+                || orderOpt.get().getStatus() != Order.OrderStatus.PENDING) {
+            redirectAttributes.addFlashAttribute("error", "Đơn hàng không hợp lệ hoặc đã được thanh toán.");
+            return "redirect:/orders";
+        }
+
+        Order order = orderOpt.get();
+        if ("PAYPAL".equalsIgnoreCase(method)) {
+            orderService.updatePaymentMethod(order.getId(), Order.PaymentMethod.PAYPAL);
+            return "redirect:/paypal-checkout?orderNumber=" + order.getOrderNumber();
+        } else if ("MOMO".equalsIgnoreCase(method)) {
+            orderService.updatePaymentMethod(order.getId(), Order.PaymentMethod.MOMO);
+            try {
+                com.fashionstore.fashion_store.dto.momo.MomoCreatePaymentResponseModel response = ((com.fashionstore.fashion_store.service.IMomoService) org.springframework.web.context.support.WebApplicationContextUtils
+                        .getRequiredWebApplicationContext(request.getServletContext())
+                        .getBean(com.fashionstore.fashion_store.service.IMomoService.class)).createPayment(order);
+
+                if (response != null && response.getPayUrl() != null && !response.getPayUrl().isEmpty()) {
+                    return "redirect:" + response.getPayUrl();
+                } else {
+                    redirectAttributes.addFlashAttribute("error",
+                            "Lỗi tạo thanh toán MoMo: " + (response != null ? response.getMessage() : "Unknown error"));
+                    return "redirect:/orders";
+                }
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi gửi yêu cầu MoMo: " + e.getMessage());
+                return "redirect:/orders";
+            }
+        }
+        return "redirect:/orders";
     }
 
     // ==================== ORDER SUCCESS ====================
